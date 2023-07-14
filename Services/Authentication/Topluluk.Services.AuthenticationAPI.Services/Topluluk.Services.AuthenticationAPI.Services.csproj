@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Core\" />
+    <None Remove="Implementation\" />
+    <None Remove="Interface\" />
+    <None Remove="Helpers\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Core\" />
+    <Folder Include="Implementation\" />
+    <Folder Include="Interface\" />
+    <Folder Include="Helpers\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Topluluk.Shared\Topluluk.Shared.csproj" />
+    <ProjectReference Include="..\Topluluk.Services.AuthenticationAPI.Model\Topluluk.Services.AuthenticationAPI.Model.csproj" />
+    <ProjectReference Include="..\..\..\Shared\DBHelper\DBHelper.csproj" />
+    <ProjectReference Include="..\Topluluk.Services.AuthenticationAPI.Data\Topluluk.Services.AuthenticationAPI.Data.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MassTransit.RabbitMQ" Version="7.1.7" />
+    <PackageReference Include="RestSharp" Version="109.0.1" />
+    <PackageReference Include="MassTransit.AspNetCore" Version="7.1.7" />
+    <PackageReference Include="StackExchange.Redis" Version="2.6.104" />
+    <PackageReference Include="Google.Apis.Auth" Version="1.61.0" />
+  </ItemGroup>
+</Project>
