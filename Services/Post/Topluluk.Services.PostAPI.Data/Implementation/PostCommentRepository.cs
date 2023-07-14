@@ -5,17 +5,19 @@ using DBHelper.Repository.Mongo;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Topluluk.Services.PostAPI.Data.Interface;
+using Topluluk.Services.PostAPI.Model.Dto;
 using Topluluk.Services.PostAPI.Model.Entity;
 
 namespace Topluluk.Services.PostAPI.Data.Implementation
 {
-	public class PostCommentRepository: MongoGenericRepository<PostComment>, IPostCommentRepository
+    public class PostCommentRepository : MongoGenericRepository<PostComment>, IPostCommentRepository
 	{
         private readonly IConnectionFactory _connectionFactory;
-
-        public PostCommentRepository(IConnectionFactory connection) : base(connection)
+        private readonly ICommentInteractionRepository _commentInteractionRepository;
+        public PostCommentRepository(IConnectionFactory connection, ICommentInteractionRepository commentInteractionRepository) : base(connection)
 		{
             _connectionFactory = connection;
+            _commentInteractionRepository = commentInteractionRepository;
         }
         private IMongoDatabase GetConnection() => (MongoDB.Driver.IMongoDatabase)_connectionFactory.GetConnection;
 
@@ -111,6 +113,38 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
             }
 
             return commentReplyCounts;
+        }
+
+        public async Task<List<PostComment>> GetPostCommentsDescendingByInteractionCount(int skip, int take, Expression<Func<PostComment, bool>> predicate)
+        {
+            try
+            {
+                var database = GetConnection();
+                var collectionName = GetCollectionName();
+
+                var cursor = await database.GetCollection<PostComment>(collectionName)
+                    .Find(predicate)
+                    .ToCursorAsync();
+
+                List<PostComment> comments = await cursor.ToListAsync();
+
+                List<string> commentIds = comments.Select(c => c.Id).ToList();
+
+                Dictionary<string, CommentLikes> commentInteractions = await _commentInteractionRepository.GetCommentsInteractionCounts(commentIds);
+
+                var sortedComments = comments.OrderByDescending(c =>
+                       commentInteractions.TryGetValue(c.Id, out var interaction)
+                           ? interaction.LikeCount + interaction.DislikeCount
+                           : 0
+                   ).Skip(skip).Take(take).ToList();
+
+
+
+                return sortedComments;
+            }catch(Exception e)
+            {
+                throw new Exception(e.Message);
+            }
         }
     }
 }

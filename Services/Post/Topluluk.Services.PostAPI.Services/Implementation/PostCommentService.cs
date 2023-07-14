@@ -30,7 +30,7 @@ public class PostCommentService : IPostCommentService
 
     public async Task<Response<List<CommentGetDto>>> GetComments(string userId, string postId, int skip = 0,int take = 10)
     {
-        List<PostComment> response =  await _commentRepository.GetPostCommentsDescendingDate(skip, take, c => !c.IsDeleted && c.PostId == postId && (c.ParentCommentId == "" || c.ParentCommentId == null));
+        List<PostComment> response =  await _commentRepository.GetPostCommentsDescendingByInteractionCount(skip, take, c => !c.IsDeleted && c.PostId == postId && (c.ParentCommentId == "" || c.ParentCommentId == null));
         
         List<CommentGetDto> comments = _mapper.Map<List<PostComment>, List<CommentGetDto>>(response);
         
