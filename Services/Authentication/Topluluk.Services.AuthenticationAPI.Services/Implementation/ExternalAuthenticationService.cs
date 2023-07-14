@@ -59,7 +59,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
 
             string newUserName = payload.Name.Replace(" ", "");
             string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
-
+            
             if (await _repository.GetFirstAsync(x => x.UserName == newUserName) != null)
             {
                 newUserName += timestamp;
