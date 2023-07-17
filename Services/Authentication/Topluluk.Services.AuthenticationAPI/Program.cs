@@ -57,7 +57,7 @@ builder.Services.AddControllers(options => options.Filters.Add<ValidationHelper>
 
 
 
-builder.Host.UseSerilog();
+builder.Host.UseSerilog(((ctx,config)=>config.ReadFrom.Configuration(ctx.Configuration)));
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -6,6 +6,7 @@ using RestSharp;
 using Topluluk.Services.AuthenticationAPI.Data.Interface;
 using Topluluk.Services.AuthenticationAPI.Model.Dto;
 using Topluluk.Services.AuthenticationAPI.Model.Entity;
+using Topluluk.Services.AuthenticationAPI.Services.Helpers;
 using Topluluk.Services.AuthenticationAPI.Services.Interface;
 using Topluluk.Shared.Constants;
 using Topluluk.Shared.Dtos;
@@ -23,24 +24,24 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
         private readonly IConfiguration _configuration;
         private readonly RestClient _client;
         private readonly _MassTransit.ISendEndpointProvider _endpointProvider;
-        private readonly IAuthenticationService _authenticationService;
 
-        public ExternalAuthenticationService(IAuthenticationRepository repository, ILoginLogRepository loginLogRepository, IConfiguration configuration,
-            _MassTransit.ISendEndpointProvider endpointProvider, IAuthenticationService authenticationService)
+        public ExternalAuthenticationService(
+            IAuthenticationRepository repository,
+            ILoginLogRepository loginLogRepository,
+            _MassTransit.ISendEndpointProvider endpointProvider,
+            IConfiguration configuration)
         {
             _repository = repository;
             _loginLogRepository = loginLogRepository;
             _configuration = configuration;
             _client = new RestClient();
             _endpointProvider = endpointProvider;
-            _authenticationService = authenticationService;
         }
 
         public async Task<Response<TokenDto>> SignInWithGoogle(GoogleLoginDto dto)
         {
             var settings = new GoogleJsonWebSignature.ValidationSettings()
             {
-
                 Audience = new List<string> { _configuration["Google:Client_Id"] ?? throw new ArgumentNullException()   }
             };
 
@@ -71,7 +72,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
                 Provider = Shared.Enums.LoginProvider.Google,
                 UserName = newUserName,
                 EmailConfirmed = payload.EmailVerified,
-                HashedPassword = HashPassword(newUserName)
+                HashedPassword = PasswordFunctions.HashPassword(newUserName)
             };
 
             UserInsertDto insertUserDto = new() {
@@ -93,7 +94,8 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
 
             await _repository.InsertAsync(credential);
             token = tokenHelper.CreateAccessToken(credential.Id, newUserName, credential.Role);
-
+            SendRegisteredMail sendRegisteredMail = new(_endpointProvider);
+            //sendRegisteredMail.send(payload.GivenName, payload.FamilyName, payload.Email);
             return Response<TokenDto>.Success(token ,ResponseStatus.Success);
         }
 
@@ -102,29 +104,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             throw new NotImplementedException();
         }
 
-        private string HashPassword(string password)
-        {
-            byte[] salt = new byte[16];
-            using (var rng = new RNGCryptoServiceProvider())
-            {
-                rng.GetBytes(salt);
-            }
-
-            byte[] hash = GetHash(password, salt);
-            return Convert.ToBase64String(salt) + "|" + Convert.ToBase64String(hash);
-        }
-
-        private byte[] GetHash(string password, byte[] salt)
-        {
-            using (var sha256 = SHA256.Create())
-            {
-                byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
-                byte[] passwordAndSalt = new byte[passwordBytes.Length + salt.Length];
-                Buffer.BlockCopy(passwordBytes, 0, passwordAndSalt, 0, passwordBytes.Length);
-                Buffer.BlockCopy(salt, 0, passwordAndSalt, passwordBytes.Length, salt.Length);
-                return sha256.ComputeHash(passwordAndSalt);
-            }
-        }
+        
 
     }
 }

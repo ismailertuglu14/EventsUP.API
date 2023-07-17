@@ -251,10 +251,12 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
                 DatabaseResponse response = new();
 
                 post.UserId = userId;
+
                 var isUserParticipiantRequest =
                     new RestRequest(ServiceConstants.API_GATEWAY + $"/Community/Participiants/{post.CommunityId}");
                 var isUserParticipiantResponse =
                     await _client.ExecuteGetAsync<Response<List<string>>>(isUserParticipiantRequest);
+
                 if (isUserParticipiantResponse.IsSuccessful && isUserParticipiantResponse.Data.Data.Contains(userId))
                 {
                     post.CommunityId = postDto.CommunityId;

@@ -18,7 +18,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Core
             AddServicesForServices(services);
         }
 
-        public static void AddServicesForRepository(this IServiceCollection services)
+        private static void AddServicesForRepository(this IServiceCollection services)
         {
             services.AddSingleton<IDbConfiguration, AuthenticationAPIDbSettings>();
             services.AddSingleton<IConnectionFactory, MongoConnectionFactory>();
@@ -27,12 +27,16 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Core
             services.AddScoped<ILoginLogRepository, LoginLogRepository>();
         }
 
-        public static void AddServicesForServices(this IServiceCollection services)
+        private static void AddServicesForServices(this IServiceCollection services)
         {
             services.AddTransient<IAuthenticationService, AuthenticationService>();
             services.AddTransient<IExternalAuthenticationService, ExternalAuthenticationService>();
         }
 
+        private static void AddServicesForLog(this IServiceCollection services)
+        {
+        //    services.
+        }
    
     }
 }

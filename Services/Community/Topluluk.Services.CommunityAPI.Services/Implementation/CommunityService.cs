@@ -168,7 +168,7 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                     var imageContent = new ByteArrayContent(imageBytes);
                     imageContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg"); // Resim formatına uygun mediatype belirleme
                     content.Add(imageContent, "file", communityInfo.CoverImage.FileName); // "files": paramtere adı "files[0].FileName": Resimin adı
-                    var imageResponse = await client.PostAsync(ServiceConstants.API_GATEWAY + "/file/upload-community-cover", content);
+                    var imageResponse = await client.PostAsync(ServiceConstants.API_GATEWAY + "/file/upload-community-cover-image", content);
 
                     if (imageResponse.IsSuccessStatusCode)
                     {
@@ -177,6 +177,38 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                         if (responseData.Data != null)
                         {
                             community.CoverImage = responseData.Data;
+                        }
+                    }
+                }
+
+            }
+
+
+            if (communityInfo.BannerImage != null)
+            {
+                ///file/upload-community-cover
+                byte[] imageBytes;
+
+                using (var stream = new MemoryStream())
+                {
+                    communityInfo.BannerImage.CopyTo(stream);
+                    imageBytes = stream.ToArray();
+                }
+                using (var client = new HttpClient())
+                {
+                    var content = new MultipartFormDataContent();
+                    var imageContent = new ByteArrayContent(imageBytes);
+                    imageContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg"); // Resim formatına uygun mediatype belirleme
+                    content.Add(imageContent, "file", communityInfo.BannerImage.FileName); // "files": paramtere adı "files[0].FileName": Resimin adı
+                    var imageResponse = await client.PostAsync(ServiceConstants.API_GATEWAY + "/file/upload-community-banner-image", content);
+
+                    if (imageResponse.IsSuccessStatusCode)
+                    {
+                        var responseData = await imageResponse.Content.ReadFromJsonAsync<Response<string>>();
+
+                        if (responseData.Data != null)
+                        {
+                            community.BannerImage = responseData.Data;
                         }
                     }
                 }

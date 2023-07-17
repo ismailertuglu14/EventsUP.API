@@ -1,15 +1,12 @@
-﻿using DotNetCore.CAP;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Topluluk.Services.CommunityAPI.Model.Dto;
 using Topluluk.Services.CommunityAPI.Model.Dto.Http;
-using Topluluk.Services.CommunityAPI.Model.Entity;
+
 using Topluluk.Services.CommunityAPI.Services.Interface;
-using Topluluk.Services.FileAPI.Model.Dto.Http;
+
 using Topluluk.Shared.BaseModels;
-using Topluluk.Shared.Constants;
 using Topluluk.Shared.Dtos;
 
-// For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace Topluluk.Services.CommunityAPI.Controllers
 {
@@ -85,7 +82,7 @@ namespace Topluluk.Services.CommunityAPI.Controllers
         /// <summary>
         /// Returns information of the communities the user has joined.
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="id">Represent community id</param>
         /// <param name="skip"></param>
         /// <param name="take"></param>
         /// <returns></returns>
