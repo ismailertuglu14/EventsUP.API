@@ -154,7 +154,6 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
 
             if (communityInfo.CoverImage != null)
             {
-                ///file/upload-community-cover
                 byte[] imageBytes;
 
                 using (var stream = new MemoryStream())
@@ -166,8 +165,8 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                 {
                     var content = new MultipartFormDataContent();
                     var imageContent = new ByteArrayContent(imageBytes);
-                    imageContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg"); // Resim formatına uygun mediatype belirleme
-                    content.Add(imageContent, "file", communityInfo.CoverImage.FileName); // "files": paramtere adı "files[0].FileName": Resimin adı
+                    imageContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg"); 
+                    content.Add(imageContent, "file", communityInfo.CoverImage.FileName); 
                     var imageResponse = await client.PostAsync(ServiceConstants.API_GATEWAY + "/file/upload-community-cover-image", content);
 
                     if (imageResponse.IsSuccessStatusCode)
@@ -186,7 +185,6 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
 
             if (communityInfo.BannerImage != null)
             {
-                ///file/upload-community-cover
                 byte[] imageBytes;
 
                 using (var stream = new MemoryStream())
@@ -198,8 +196,8 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                 {
                     var content = new MultipartFormDataContent();
                     var imageContent = new ByteArrayContent(imageBytes);
-                    imageContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg"); // Resim formatına uygun mediatype belirleme
-                    content.Add(imageContent, "file", communityInfo.BannerImage.FileName); // "files": paramtere adı "files[0].FileName": Resimin adı
+                    imageContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg"); 
+                    content.Add(imageContent, "file", communityInfo.BannerImage.FileName); 
                     var imageResponse = await client.PostAsync(ServiceConstants.API_GATEWAY + "/file/upload-community-banner-image", content);
 
                     if (imageResponse.IsSuccessStatusCode)
