@@ -1,6 +1,4 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using Google.Apis.Auth;
+﻿using Google.Apis.Auth;
 using Microsoft.Extensions.Configuration;
 using RestSharp;
 using Topluluk.Services.AuthenticationAPI.Data.Interface;
@@ -42,9 +40,9 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
         {
             var settings = new GoogleJsonWebSignature.ValidationSettings()
             {
-                Audience = new List<string> { _configuration["Google:Client_Id"] ?? throw new ArgumentNullException()   }
+                Audience = new List<string> { _configuration["Google:Client_Id"] ?? throw new ArgumentNullException() }
             };
-
+           
             var payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken, settings);
 
             var userCredentials = await _repository.GetFirstAsync(x => x.Email == payload.Email);
