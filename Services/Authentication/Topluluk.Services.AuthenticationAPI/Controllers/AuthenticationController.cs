@@ -1,12 +1,9 @@
-﻿
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Topluluk.Services.AuthenticationAPI.Model.Dto;
 using Topluluk.Services.AuthenticationAPI.Model.Dto.Http;
 using Topluluk.Services.AuthenticationAPI.Services.Interface;
 using Topluluk.Shared.BaseModels;
 using Topluluk.Shared.Dtos;
-
-// For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace Topluluk.Services.AuthenticationAPI.Controllers
 { 
@@ -65,6 +62,13 @@ namespace Topluluk.Services.AuthenticationAPI.Controllers
         {
             return await _authenticationService.ResetPassword( resetPasswordDto);
         }
+
+        [HttpPost("change-password")]
+        public async Task<Response<NoContent>> ChangePassword(PasswordChangeDto passwordDto)
+        {
+            return await _authenticationService.ChangePassword(this.UserId, passwordDto);
+        }
+
         // @@@@@@@@@@@ Http Requests @@@@@@@@@@@@@@@
 
         [HttpPost("delete")]
@@ -74,11 +78,6 @@ namespace Topluluk.Services.AuthenticationAPI.Controllers
             return await _authenticationService.DeleteUser(this.UserId, dto);
         }
 
-        [HttpPost("change-password")]
-        public async Task<Response<NoContent>> ChangePassword(PasswordChangeDto passwordDto)
-        {
-            return await _authenticationService.ChangePassword(this.UserId, passwordDto);
-        }
 
         [HttpPost("update-profile")]
         public async Task<Response<NoContent>> UpdateProfile(UserUpdateDto userDto)
