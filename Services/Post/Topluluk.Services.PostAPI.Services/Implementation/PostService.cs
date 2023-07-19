@@ -266,7 +266,7 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
 
                     if (!isUserParticipiantResponse.IsSuccessful || !isUserParticipiantResponse.Data.Data.Any(c => c.Id == postDto.CommunityId))
                     {
-                        throw new UnauthorizedAccessException();
+                        throw new UnauthorizedAccessException("User not participiant of this community.");
                     }
                     post.CommunityId = postDto.CommunityId;                    
                 }
@@ -493,7 +493,7 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
                     List<CommentGetDto> commentDtos = _mapper.Map<List<PostComment>, List<CommentGetDto>>(comments);
 
                     var ids = commentDtos.Select(comment => comment.UserId).ToList();
-                    var idList = new IdList { ids = ids };
+                    IdList idList = new(ids);
 
                     var request = new RestRequest(ServiceConstants.API_GATEWAY + "/user/get-user-info-list").AddBody(idList);
                     var response = await _client.ExecutePostAsync<Response<List<UserInfoDto>>>(request);
