@@ -5,6 +5,8 @@ using Microsoft.IdentityModel.Tokens;
 using Topluluk.Services.EventAPI.Model.Mapper;
 using Topluluk.Services.EventAPI.Services.Core;
 using MassTransit;
+using Topluluk.Shared.Middleware;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -73,7 +75,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication(); // For jwt
 
 app.UseAuthorization();
-
+app.UseMiddleware<ErrorHandlingMiddleware>();
 app.MapControllers();
 app.UseCors();
 app.Run();
