@@ -3,7 +3,7 @@ using Topluluk.Shared.Enums;
 
 namespace Topluluk.Services.EventAPI.Model.Dto.Http
 {
-	public class GetUserInfoDto
+	public class UserInfoDto
 	{
         public string Id { get; set; }
         public string FirstName { get; set; }
@@ -12,7 +12,7 @@ namespace Topluluk.Services.EventAPI.Model.Dto.Http
         public string? ProfileImage { get; set; }
         public GenderEnum Gender { get; set; }
 
-        public GetUserInfoDto()
+        public UserInfoDto()
         {
         }
     }
