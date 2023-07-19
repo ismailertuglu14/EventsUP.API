@@ -73,8 +73,6 @@ public class EventCommentService : IEventCommentService
 
     public async Task<Response<List<GetEventCommentDto>>> GetEventComments(string userId, string id, int skip = 0, int take = 10)
     {
-
-
         var response = _commentRepository.GetListByExpressionPaginated(skip,take, c => c.EventId == id);
         if (response != null && response.Count > 0)
         {
