@@ -22,28 +22,29 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
 
         private string GetCollectionName() => string.Format("{0}Collection", typeof(Post).Name);
 
-        public Task<bool> DeletePosts(string userId)
+        public async Task<bool> DeletePosts(string userId)
         {
-            try
-            {
-                var database = GetConnection();
-                var collectionName = GetCollectionName();
 
-                var filter = Builders<Post>.Filter.And(
-                    Builders<Post>.Filter.Eq(p => p.UserId, userId),
-                    Builders<Post>.Filter.Eq(p => p.IsDeleted, false));
+            var database = GetConnection();
+            var collectionName = GetCollectionName();
 
-                var update = Builders<Post>.Update.Set(p => p.IsDeleted, true);
+            var filter = Builders<Post>.Filter.And(
+                Builders<Post>.Filter.Eq(p => p.UserId, userId),
+                Builders<Post>.Filter.Eq(p => p.IsDeleted, false));
 
-                database.GetCollection<Post>(collectionName).UpdateMany(filter, update);
-                return Task.FromResult(true);
-            }
-            catch
-            {
-                return Task.FromResult(false);
-            }
-         }
+            var update = Builders<Post>.Update.Set(p => p.IsDeleted, true);
 
+            var result = database.GetCollection<Post>(collectionName).UpdateMany(filter, update);
+            return await Task.FromResult(result.ModifiedCount > 0);
+        }
+
+        /// <summary>
+        /// Get posts descending by create date
+        /// </summary>
+        /// <param name="skip"></param>
+        /// <param name="take"></param>
+        /// <param name="expression"></param>
+        /// <returns></returns>
         public async Task<List<Post>> GetPostsWithDescending(int skip, int take, Expression<Func<Post, bool>> expression)
         {
             var database = GetConnection();
