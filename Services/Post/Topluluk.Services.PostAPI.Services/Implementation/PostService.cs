@@ -252,14 +252,23 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
 
                 post.UserId = userId;
 
-                var isUserParticipiantRequest =
-                    new RestRequest(ServiceConstants.API_GATEWAY + $"/Community/Participiants/{post.CommunityId}");
-                var isUserParticipiantResponse =
-                    await _client.ExecuteGetAsync<Response<List<string>>>(isUserParticipiantRequest);
-
-                if (isUserParticipiantResponse.IsSuccessful && isUserParticipiantResponse.Data.Data.Contains(userId))
+                // If communityId given
+                if (!postDto.CommunityId.IsNullOrEmpty())
                 {
-                    post.CommunityId = postDto.CommunityId;
+                    var isUserParticipiantRequest =
+                   new RestRequest(ServiceConstants.API_GATEWAY + $"/Community/user-communities")
+                   .AddQueryParameter("id", userId)
+                   .AddQueryParameter("skip", 0)
+                   .AddQueryParameter("take", 100);
+
+                    var isUserParticipiantResponse =
+                        await _client.ExecuteGetAsync<Response<List<CommunityInfoPostLinkDto>>>(isUserParticipiantRequest);
+
+                    if (!isUserParticipiantResponse.IsSuccessful || !isUserParticipiantResponse.Data.Data.Any(c => c.Id == postDto.CommunityId))
+                    {
+                        throw new UnauthorizedAccessException();
+                    }
+                    post.CommunityId = postDto.CommunityId;                    
                 }
 
                 Response<List<string>>? responseData = new();

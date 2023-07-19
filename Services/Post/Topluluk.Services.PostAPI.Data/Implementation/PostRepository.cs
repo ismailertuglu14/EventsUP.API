@@ -18,7 +18,7 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
 		{
             _connectionFactory = connectionFactory;
         }
-        private IMongoDatabase GetConnection() => (MongoDB.Driver.IMongoDatabase)_connectionFactory.GetConnection;
+        private new IMongoDatabase GetConnection() => (MongoDB.Driver.IMongoDatabase)_connectionFactory.GetConnection;
 
         private string GetCollectionName() => string.Format("{0}Collection", typeof(Post).Name);
 
