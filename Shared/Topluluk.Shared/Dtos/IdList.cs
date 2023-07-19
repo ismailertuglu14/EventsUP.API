@@ -5,6 +5,12 @@ namespace Topluluk.Shared.Dtos
 	{
 		
 		public List<string> ids { get; set; }
+
+		public IdList(List<string> ids)
+		{
+			this.ids = ids;
+		}
+
 		public IdList()
 		{
 			ids = new List<string>();
