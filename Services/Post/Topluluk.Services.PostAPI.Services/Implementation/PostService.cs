@@ -251,13 +251,24 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
                 DatabaseResponse response = new();
 
                 post.UserId = userId;
-                var isUserParticipiantRequest =
-                    new RestRequest(ServiceConstants.API_GATEWAY + $"/Community/Participiants/{post.CommunityId}");
-                var isUserParticipiantResponse =
-                    await _client.ExecuteGetAsync<Response<List<string>>>(isUserParticipiantRequest);
-                if (isUserParticipiantResponse.IsSuccessful && isUserParticipiantResponse.Data.Data.Contains(userId))
+
+                // If communityId given
+                if (!postDto.CommunityId.IsNullOrEmpty())
                 {
-                    post.CommunityId = postDto.CommunityId;
+                    var isUserParticipiantRequest =
+                   new RestRequest(ServiceConstants.API_GATEWAY + $"/Community/user-communities")
+                   .AddQueryParameter("id", userId)
+                   .AddQueryParameter("skip", 0)
+                   .AddQueryParameter("take", 100);
+
+                    var isUserParticipiantResponse =
+                        await _client.ExecuteGetAsync<Response<List<CommunityInfoPostLinkDto>>>(isUserParticipiantRequest);
+
+                    if (!isUserParticipiantResponse.IsSuccessful || !isUserParticipiantResponse.Data.Data.Any(c => c.Id == postDto.CommunityId))
+                    {
+                        throw new UnauthorizedAccessException("User not participiant of this community.");
+                    }
+                    post.CommunityId = postDto.CommunityId;                    
                 }
 
                 Response<List<string>>? responseData = new();
@@ -482,7 +493,7 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
                     List<CommentGetDto> commentDtos = _mapper.Map<List<PostComment>, List<CommentGetDto>>(comments);
 
                     var ids = commentDtos.Select(comment => comment.UserId).ToList();
-                    var idList = new IdList { ids = ids };
+                    IdList idList = new(ids);
 
                     var request = new RestRequest(ServiceConstants.API_GATEWAY + "/user/get-user-info-list").AddBody(idList);
                     var response = await _client.ExecutePostAsync<Response<List<UserInfoDto>>>(request);

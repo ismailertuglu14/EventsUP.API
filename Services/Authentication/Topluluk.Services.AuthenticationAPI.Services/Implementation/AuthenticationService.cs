@@ -1,18 +1,16 @@
-﻿using System.Collections;
-using System.Security.Cryptography;
-using System.Text;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using RestSharp;
 using Topluluk.Services.AuthenticationAPI.Data.Interface;
 using Topluluk.Services.AuthenticationAPI.Model.Dto;
 using Topluluk.Services.AuthenticationAPI.Model.Dto.Http;
 using Topluluk.Services.AuthenticationAPI.Model.Entity;
+using Topluluk.Services.AuthenticationAPI.Services.Helpers;
 using Topluluk.Services.AuthenticationAPI.Services.Interface;
 using Topluluk.Shared.Constants;
 using Topluluk.Shared.Dtos;
 using Topluluk.Shared.Helper;
-using Topluluk.Shared.Messages;
 using Topluluk.Shared.Messages.Authentication;
 using _MassTransit = MassTransit;
 using ResponseStatus = Topluluk.Shared.Enums.ResponseStatus;
@@ -26,13 +24,15 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
         private readonly IConfiguration _configuration;
         private readonly RestClient _client;
         private readonly _MassTransit.ISendEndpointProvider _endpointProvider;
-        public AuthenticationService(IAuthenticationRepository repository, _MassTransit.ISendEndpointProvider endpointProvider, IConfiguration configuration, ILoginLogRepository loginLogRepository)
+        private readonly ILogger<AuthenticationService> _logger;
+        public AuthenticationService(ILogger<AuthenticationService> logger,IAuthenticationRepository repository, _MassTransit.ISendEndpointProvider endpointProvider, IConfiguration configuration, ILoginLogRepository loginLogRepository)
 		{
             _repository = repository;
             _configuration = configuration;
             _loginLogRepository = loginLogRepository;
             _endpointProvider = endpointProvider;
             _client = new RestClient();
+            _logger = logger;
 		}
 
         public async Task<Response<TokenDto>> SignIn(SignInUserDto userDto, string? ipAdress, string? deviceId)
@@ -52,7 +52,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
 
             if(user != null)
             {
-                var verifiedPassword = VerifyPassword(userDto.Password, user.HashedPassword);
+                var verifiedPassword = PasswordFunctions.VerifyPassword(userDto.Password, user.HashedPassword);
                 if(verifiedPassword)
                 {
                     // Dead code fix later.b
@@ -87,6 +87,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
                 }
                 _repository.Update(user);
             }
+            
             return Response<TokenDto>.Fail("Username or password wrong!", ResponseStatus.NotAuthenticated);
         }
 
@@ -103,7 +104,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
                     UserName = userDto.UserName,
                     Email = userDto.Email,
                     Provider = userDto.Provider,
-                    HashedPassword = HashPassword(userDto.Password),
+                    HashedPassword = PasswordFunctions.HashPassword(userDto.Password),
                 });
 
                 var content = new UserInsertDto
@@ -130,15 +131,12 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
                 var token = new TokenHelper(_configuration).CreateAccessToken(response.Data, userDto.UserName, role ,2);
                 var user = _repository.GetFirst(u => u.UserName == userDto.UserName);
                 UpdateRefreshToken(user, token, 2);
+
+                SendRegisteredMail sendRegisteredMail = new(_endpointProvider);
+
+                //sendRegisteredMail.send(userDto.FirstName, userDto.LastName, userDto.Email);
                 
-             /*   var sendEndpoint = await _endpointProvider.GetSendEndpoint(new Uri(QueueConstants.SUCCESSFULLY_REGISTERED_MAIL));
-                var registerMessage = new SuccessfullyRegisteredCommand
-                {
-                    To = userDto.Email,
-                    FullName = $"{userDto.FirstName} {userDto.LastName}"
-                };
-                sendEndpoint.Send<SuccessfullyRegisteredCommand>(registerMessage);
-*/
+
                 return Response<TokenDto>.Success(token, ResponseStatus.Success);
    
         }
@@ -214,7 +212,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
 
                 if (user.ResetPasswordCode == passwordDto.Code)
                 {
-                    user.HashedPassword = HashPassword(passwordDto.NewPassword);
+                    user.HashedPassword = PasswordFunctions.HashPassword(passwordDto.NewPassword);
                     user.ResetPasswordCode = null;
                     user.ResetPasswordTokenEndDate = null;
                     _repository.Update(user);
@@ -236,14 +234,14 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
                 return Response<NoContent>.Fail("Not Found", ResponseStatus.NotFound);
             }
 
-            var verifiedPassword = VerifyPassword(passwordDto.OldPassword, user.HashedPassword);
+            var verifiedPassword = PasswordFunctions.VerifyPassword(passwordDto.OldPassword, user.HashedPassword);
 
             if (verifiedPassword == false)
             {
                 return Response<NoContent>.Fail("Not authenticated", ResponseStatus.NotAuthenticated);
             }
 
-            user.HashedPassword = HashPassword(passwordDto.NewPassword);
+            user.HashedPassword = PasswordFunctions.HashPassword(passwordDto.NewPassword);
             _repository.Update(user);
 
             return Response<NoContent>.Success(ResponseStatus.Success);
@@ -277,38 +275,10 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             _repository.UpdateRefreshToken(user);
         }
  
-        private string HashPassword(string password)
-        {
-            byte[] salt = new byte[16];
-            using (var rng = new RNGCryptoServiceProvider())
-            {
-                rng.GetBytes(salt);
-            }
+       
+       
 
-            byte[] hash = GetHash(password, salt);
-            return Convert.ToBase64String(salt) + "|" + Convert.ToBase64String(hash);
-        }
-
-        private bool VerifyPassword(string password, string hashedPassword)
-        {
-            string[] parts = hashedPassword.Split('|');
-            byte[] salt = Convert.FromBase64String(parts[0]);
-            byte[] expectedHash = Convert.FromBase64String(parts[1]);
-            byte[] actualHash = GetHash(password, salt);
-            return StructuralComparisons.StructuralEqualityComparer.Equals(actualHash, expectedHash);
-        }
-
-        private byte[] GetHash(string password, byte[] salt)
-        {
-            using (var sha256 = SHA256.Create())
-            {
-                byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
-                byte[] passwordAndSalt = new byte[passwordBytes.Length + salt.Length];
-                Buffer.BlockCopy(passwordBytes, 0, passwordAndSalt, 0, passwordBytes.Length);
-                Buffer.BlockCopy(salt, 0, passwordAndSalt, passwordBytes.Length, salt.Length);
-                return sha256.ComputeHash(passwordAndSalt);
-            }
-        }
+       
 
         public async Task<Response<NoContent>> DeleteUser(string id, UserDeleteDto userDto)
         {

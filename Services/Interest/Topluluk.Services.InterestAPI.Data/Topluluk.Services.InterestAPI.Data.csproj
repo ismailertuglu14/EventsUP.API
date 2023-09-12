@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\DBHelper\DBHelper.csproj" />
+    <ProjectReference Include="..\Topluluk.Services.InterestAPI.Model\Topluluk.Services.InterestAPI.Model.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Implementation\" />
+    <Folder Include="Interface\" />
+    <Folder Include="Settings\" />
+  </ItemGroup>
+
+</Project>

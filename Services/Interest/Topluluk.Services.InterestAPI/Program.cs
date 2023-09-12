@@ -1,32 +1,34 @@
-﻿using System.Text;
+using System.Text;
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Topluluk.Services.EventAPI.Model.Mapper;
-using Topluluk.Services.EventAPI.Services.Core;
-using MassTransit;
+using Topluluk.Services.InterestAPI.Model;
+using Topluluk.Services.InterestAPI.Services.Core;
 using Topluluk.Shared.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
-{
-    builder.AllowAnyOrigin()
-           .AllowAnyMethod()
-           .AllowAnyHeader();
-}));
-var mapperConfig = new MapperConfiguration(cfg =>
-{
-    cfg.AddProfile(new GeneralMapper());
-});
-builder.Services.AddSingleton(mapperConfig.CreateMapper());
 
 builder.Services.AddControllers();
-builder.Services.AddInfrastructure();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
+{
+    builder.AllowAnyOrigin()
+        .AllowAnyMethod()
+        .AllowAnyHeader();
+}));
+var mapperConfig = new MapperConfiguration(cfg =>
+{
+    cfg.AllowNullCollections = true;
+    cfg.AddProfile(new GeneralMapper());
+});
+
+builder.Services.AddSingleton(mapperConfig.CreateMapper());
+IConfiguration configuration = builder.Configuration;
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -37,7 +39,7 @@ builder.Services.AddAuthentication(options =>
     options.SaveToken = true;
     options.RequireHttpsMetadata = false;
     options.TokenValidationParameters = new TokenValidationParameters()
-    {   
+    {
         ValidateIssuer = false,
         ValidIssuer = builder.Configuration["JWT:ValidIssuer"],
         ValidateAudience = false,
@@ -45,23 +47,11 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]))
-        
+
 
     };
 });
-builder.Services.AddMassTransit(x =>
-{
-    x.UsingRabbitMq((context, cfg) =>
-    {
-        cfg.Host("localhost","/", host =>
-        {
-            host.Username("guest");
-            host.Password("guest");
-        });
-    });
-});
-builder.Services.AddMassTransitHostedService();
-
+builder.Services.AddInfrastructure();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -72,11 +62,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseAuthentication(); // For jwt
 
-app.UseAuthorization();
 app.UseMiddleware<ErrorHandlingMiddleware>();
-app.MapControllers();
+app.UseAuthentication(); // For jwt
+app.UseAuthorization();
 app.UseCors();
-app.Run();
 
+app.MapControllers();
+
+app.Run();

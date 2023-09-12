@@ -1,9 +1,6 @@
-﻿using System;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Topluluk.Services.CommunityAPI.Model.Dto;
 using Topluluk.Services.CommunityAPI.Model.Dto.Http;
-using Topluluk.Services.CommunityAPI.Model.Entity;
-using Topluluk.Services.FileAPI.Model.Dto.Http;
 using Topluluk.Shared.Dtos;
 
 namespace Topluluk.Services.CommunityAPI.Services.Interface
@@ -13,8 +10,8 @@ namespace Topluluk.Services.CommunityAPI.Services.Interface
 
 		Task<Response<List<CommunityGetPreviewDto>>> GetCommunitySuggestions(string userId, HttpRequest request, int skip = 0, int take = 5 );
 	
-		// Community Detail Page
 		Task<Response<CommunityGetByIdDto>> GetCommunityById(string userId,string token, string id);
+
 		Task<Response<string>> Create(string userId, string token, CommunityCreateDto communityInfo);
 		Task<Response<string>> Delete(string ownerId, string communityId);
         Task<Response<string>> DeletePermanently(string ownerId, string communityId);

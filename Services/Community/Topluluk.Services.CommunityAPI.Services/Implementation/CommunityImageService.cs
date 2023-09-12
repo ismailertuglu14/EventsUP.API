@@ -1,12 +1,11 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
 using RestSharp;
 using Topluluk.Services.CommunityAPI.Data.Interface;
-using Topluluk.Services.CommunityAPI.Model.Dto;
 using Topluluk.Services.CommunityAPI.Model.Entity;
 using Topluluk.Services.CommunityAPI.Services.Interface;
-using Topluluk.Services.FileAPI.Model.Dto.Http;
 using Topluluk.Shared.Constants;
 using Topluluk.Shared.Dtos;
 using Topluluk.Shared.Exceptions;
@@ -26,7 +25,7 @@ public class CommunityImageService : ICommunityImageService
         _client = new RestClient();
     }
     
-      public async Task<Response<string>> UpdateCoverImage(string userId, string communityId, CoverImageUpdateDto dto)
+      public async Task<Response<string>> UpdateCoverImage(string userId, string communityId, IFormFile file)
         {
             Community? community = await _communityRepository.GetFirstAsync(c => c.Id == communityId && c.AdminId == userId);
 
@@ -35,14 +34,14 @@ public class CommunityImageService : ICommunityImageService
                 return Response<string>.Fail("Community Not Found", ResponseStatus.NotFound);
             }
 
-            if (dto.File == null)
+            if (file == null)
                 return Response<string>.Success(community.CoverImage ?? "", ResponseStatus.Success);
             
             byte[] imageBytes;
 
             using (var stream = new MemoryStream())
             {
-                await dto.File.CopyToAsync(stream);
+                await file.CopyToAsync(stream);
                 imageBytes = stream.ToArray();
             }
             
@@ -53,7 +52,7 @@ public class CommunityImageService : ICommunityImageService
 
                 var imageContent = new ByteArrayContent(imageBytes);
                 imageContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg");
-                content.Add(imageContent, "File", dto.File.FileName);
+                content.Add(imageContent, "File", file.FileName);
 
 
                 if (!community.CoverImage.IsNullOrEmpty())
@@ -87,7 +86,7 @@ public class CommunityImageService : ICommunityImageService
             }
         }
     
-    public async Task<Response<string>> UpdateBannerImage(string userId, string communityId, BannerImageUpdateDto dto)
+    public async Task<Response<string>> UpdateBannerImage(string userId, string communityId, IFormFile file)
         {
             
             Community community = await _communityRepository.GetFirstAsync(c => c.Id == communityId);
@@ -105,7 +104,7 @@ public class CommunityImageService : ICommunityImageService
 
                 using (var stream = new MemoryStream())
                 {
-                    await dto.File.CopyToAsync(stream);
+                    await file.CopyToAsync(stream);
                     imageBytes = stream.ToArray();
                 }
 
@@ -114,7 +113,7 @@ public class CommunityImageService : ICommunityImageService
 
                 var imageContent = new ByteArrayContent(imageBytes);
                 imageContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg");
-                content.Add(imageContent, "File", dto.File.FileName);
+                content.Add(imageContent, "File", file.FileName);
 
 
                 if (!community.CoverImage.IsNullOrEmpty())

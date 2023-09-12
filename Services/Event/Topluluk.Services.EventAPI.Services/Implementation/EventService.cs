@@ -54,7 +54,7 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
                 var userExistRequest =
                     new RestRequest(ServiceConstants.API_GATEWAY + "/User/GetUserById")
                         .AddHeader("Authorization",token).AddQueryParameter("userid", userId);
-                var userExistResponse = await _client.ExecuteGetAsync<Response<GetUserInfoDto>>(userExistRequest);
+                var userExistResponse = await _client.ExecuteGetAsync<Response<UserInfoDto>>(userExistRequest);
                 
                 if (userExistResponse.Data?.Data == null)
                 {
@@ -320,7 +320,7 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
                   var eventOwnerRequest = new RestRequest(ServiceConstants.API_GATEWAY + "/user/GetUserById")
                         .AddQueryParameter("userId",_event.UserId)
                         .AddHeader("Authorization",token);
-                    var eventOwnerResponseTask = _client.ExecuteGetAsync<Response<GetUserInfoDto>>(eventOwnerRequest);
+                    var eventOwnerResponseTask = _client.ExecuteGetAsync<Response<UserInfoDto>>(eventOwnerRequest);
                     
                     var commentCountTask =  _commentRepository.Count(c => !c.IsDeleted && c.EventId == id);
                     var commentsTask = _commentRepository.GetAllAsync(10, 0, c => c.EventId == id);
@@ -329,7 +329,7 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
                     
                     var idList = new IdList() { ids = (commentsTask.Result.Data as List<EventComment>).Select(c => c.UserId).ToList() };
                     var userInfosReqeust = new RestRequest(ServiceConstants.API_GATEWAY + "/user/get-user-info-list").AddBody(idList);
-                    var userInfosResponseTask =  _client.ExecutePostAsync<Response<List<GetUserInfoDto>>>(userInfosReqeust);
+                    var userInfosResponseTask =  _client.ExecutePostAsync<Response<List<UserInfoDto>>>(userInfosReqeust);
 
                     await Task.WhenAll(userInfosResponseTask, eventOwnerResponseTask, commentCountTask,commentsTask, isAttendeedTask, attendeesCountTask);
                    
@@ -339,7 +339,7 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
                         for (int i = 0; i < commentsTask.Result.Data.Count; i++)
                         {
                             var response = userInfosResponseTask.Result;
-                            GetUserInfoDto commentOwner = response.Data.Data.Where(u => u.Id == commentsTask.Result.Data[i].UserId)
+                            UserInfoDto commentOwner = response.Data.Data.Where(u => u.Id == commentsTask.Result.Data[i].UserId)
                                 .FirstOrDefault() ?? throw new InvalidOperationException();
                             GetEventCommentDto commentDto = new()
                             {
@@ -392,7 +392,7 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
                 
                 var usersRequest = new RestRequest(ServiceConstants.API_GATEWAY+"/user/get-user-info-list")
                     .AddHeader("Authorization",token).AddBody(idList);
-                var usersResponse = await _client.ExecutePostAsync<Response<List<GetUserInfoDto>>>(usersRequest);
+                var usersResponse = await _client.ExecutePostAsync<Response<List<UserInfoDto>>>(usersRequest);
                 
                 List<GetEventAttendeesDto> dtos = _mapper.Map<List<EventAttendee>, List<GetEventAttendeesDto>>(attendees);
 
@@ -429,7 +429,7 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
                 var eventOwnerRequest = new RestRequest(ServiceConstants.API_GATEWAY + "/user/GetUserById")
                     .AddQueryParameter("userId",id)
                     .AddHeader("Authorization",token);
-                var eventOwnerResponse = await _client.ExecuteGetAsync<Response<GetUserInfoDto>>(eventOwnerRequest);
+                var eventOwnerResponse = await _client.ExecuteGetAsync<Response<UserInfoDto>>(eventOwnerRequest);
 
                 var dtos = _mapper.Map<List<Event>, List<EventDto>>(events);
                 var eventIds = dtos.Select(e => e.Id).ToList();

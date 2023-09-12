@@ -30,5 +30,7 @@
     <PackageReference Include="MassTransit.AspNetCore" Version="7.1.7" />
     <PackageReference Include="StackExchange.Redis" Version="2.6.104" />
     <PackageReference Include="Google.Apis.Auth" Version="1.61.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="6.0.0" />
+    <PackageReference Include="GL.Serilog.Sinks.MongoDB" Version="4.1.0" />
   </ItemGroup>
 </Project>

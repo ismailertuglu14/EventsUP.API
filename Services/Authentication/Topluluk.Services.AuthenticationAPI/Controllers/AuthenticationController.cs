@@ -1,5 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Topluluk.Services.AuthenticationAPI.Model.Dto;
 using Topluluk.Services.AuthenticationAPI.Model.Dto.Http;
 using Topluluk.Services.AuthenticationAPI.Services.Interface;
@@ -19,11 +18,6 @@ namespace Topluluk.Services.AuthenticationAPI.Controllers
             _externalAuthenticationService = externalAuthenticationService;
         }
 
-        /// <summary>
-        /// SignIn with username or email
-        /// </summary>
-        /// <param name="userDto"></param>
-        /// <returns></returns>
         [HttpPost("SignIn")]
         public async Task<Response<TokenDto>> SignIn(SignInUserDto userDto)
         {

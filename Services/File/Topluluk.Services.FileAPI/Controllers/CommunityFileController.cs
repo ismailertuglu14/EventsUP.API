@@ -32,12 +32,12 @@ public class CommunityFileController
     [HttpPost("upload-community-banner-image")]
     public async Task<Response<string>> UploadCommunityBannerImage(IFormFile file)
     {
-        return await _storageService.UploadOneAsync("community-cover-images",file);
+        return await _storageService.UploadOneAsync("community-banner-images", file);
     }
     
     [HttpPost("delete-community-banner-image")]
     public async Task<Response<string>> DeleteCommunityBannerImage(NameObject fileName)
     {
-        return await _storageService.DeleteAsync("community-cover-images",fileName.Name);
+        return await _storageService.DeleteAsync("community-banner-images",fileName.Name);
     }
 }
