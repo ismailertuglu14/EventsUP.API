@@ -9,7 +9,6 @@ using Topluluk.Shared.Dtos;
 
 namespace Topluluk.Services.InterestAPI.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
     public class InterestController : BaseController
     {
@@ -26,7 +25,7 @@ namespace Topluluk.Services.InterestAPI.Controllers
         [HttpGet("All")]
         public async Task<Response<List<GetInterestDto>>> GetInterests()
         {
-            return new();
+            return await _interestService.GetInterests(this.UserId);
         }
 
 

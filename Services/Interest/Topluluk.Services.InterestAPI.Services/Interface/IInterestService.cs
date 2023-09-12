@@ -6,5 +6,6 @@ namespace Topluluk.Services.InterestAPI.Services.Interface;
 
 public interface IInterestService
 {
+    Task<Response<List<GetInterestDto>>> GetInterests(string userId);
     Task<Response<Interest>> CreateInterest(CreateInterestDto dto, string token);
 }

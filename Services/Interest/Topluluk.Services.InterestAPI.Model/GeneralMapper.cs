@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
+using Topluluk.Services.InterestAPI.Model.Dto;
+using Topluluk.Services.InterestAPI.Model.Entity;
 
 namespace Topluluk.Services.InterestAPI.Model
 {
@@ -11,7 +13,7 @@ namespace Topluluk.Services.InterestAPI.Model
     {
         public GeneralMapper()
         {
-            
+            CreateMap<Interest, GetInterestDto>();
         }
     }
 }
