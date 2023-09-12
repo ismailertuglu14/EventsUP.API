@@ -23,7 +23,7 @@ namespace Topluluk.Services.User.API.Controllers
         }
 
         [HttpGet("GetUserById")]
-        [Authorize] 
+       // [Authorize] 
         public async Task<Response<GetUserByIdDto>> GetUserById(string userId)
         {
             return await _userService.GetUserById(this.UserId, userId);
