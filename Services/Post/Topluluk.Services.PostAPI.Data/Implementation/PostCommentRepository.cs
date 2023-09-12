@@ -23,7 +23,29 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
 
         private string GetCollectionName() => $"{nameof(PostComment)}Collection";
 
-     
+
+        public async Task<List<PostComment>> GetPostCommentsAscendingDate(int skip, int take, Expression<Func<PostComment, bool>> predicate)
+        {
+            try
+            {
+                var database = GetConnection();
+                var collectionName = GetCollectionName();
+                var sort = Builders<PostComment>.Sort.Ascending(p => p.CreatedAt);
+                var cursor = await database.GetCollection<PostComment>(collectionName)
+                    .Find(predicate)
+                    .Sort(sort)
+                    .Skip(skip * take)
+                    .Limit(take)
+                    .ToCursorAsync();
+
+                return await cursor.ToListAsync();
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
         public async Task<List<PostComment>> GetPostCommentsDescendingDate(int skip, int take, Expression<Func<PostComment, bool>> predicate)
         {
             
@@ -45,6 +67,36 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
             catch(Exception e)
             {
                 throw e;
+            }
+        }
+
+        public async Task<List<PostComment>> GetPostCommentsAscendingByInteractionCount(int skip, int take, Expression<Func<PostComment, bool>> predicate)
+        {
+            try
+            {
+                var database = GetConnection();
+                var collectionName = GetCollectionName();
+
+                var cursor = await database.GetCollection<PostComment>(collectionName)
+                    .Find(predicate)
+                    .ToCursorAsync();
+
+                List<PostComment> comments = await cursor.ToListAsync();
+
+                List<string> commentIds = comments.Select(c => c.Id).ToList();
+
+                Dictionary<string, CommentLikes> commentInteractions = await _commentInteractionRepository.GetCommentsInteractionCounts(commentIds);
+
+                var sortedComments = comments.OrderBy(c =>
+                    commentInteractions.TryGetValue(c.Id, out var interaction)
+                        ? interaction.LikeCount + interaction.DislikeCount
+                        : 0
+                ).Skip(skip).Take(take).ToList();
+                return sortedComments;
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
             }
         }
 
@@ -137,9 +189,6 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
                            ? interaction.LikeCount + interaction.DislikeCount
                            : 0
                    ).Skip(skip).Take(take).ToList();
-
-
-
                 return sortedComments;
             }catch(Exception e)
             {

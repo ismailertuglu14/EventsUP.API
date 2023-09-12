@@ -28,9 +28,29 @@ public class PostCommentService : IPostCommentService
         _client = new RestClient();
     }
 
-    public async Task<Response<List<CommentGetDto>>> GetComments(string userId, string postId, int skip = 0,int take = 10)
+    public async Task<Response<List<CommentGetDto>>> GetComments(string userId, string postId, CommentFilter filter = CommentFilter.InteractionDescending, int skip = 0,int take = 10)
     {
-        List<PostComment> response =  await _commentRepository.GetPostCommentsDescendingByInteractionCount(skip, take, c => !c.IsDeleted && c.PostId == postId && (c.ParentCommentId == "" || c.ParentCommentId == null));
+        List<PostComment> response = new List<PostComment>();
+
+        switch (filter)
+        {
+            case CommentFilter.InteractionDescending:
+                response = await _commentRepository.GetPostCommentsDescendingByInteractionCount(skip, take, c => !c.IsDeleted && c.PostId == postId && (c.ParentCommentId == "" || c.ParentCommentId == null));
+                break;
+            case CommentFilter.InteractionAscending:
+                response = await _commentRepository.GetPostCommentsAscendingByInteractionCount(skip, take, c => !c.IsDeleted && c.PostId == postId && (c.ParentCommentId == "" || c.ParentCommentId == null));
+                break;
+            case CommentFilter.TimeDescending:
+                response = await _commentRepository.GetPostCommentsDescendingDate(skip, take, c => !c.IsDeleted && c.PostId == postId && (c.ParentCommentId == "" || c.ParentCommentId == null));
+                break;
+            case CommentFilter.TimeAscending:
+                response = await _commentRepository.GetPostCommentsAscendingDate(skip, take, c => !c.IsDeleted && c.PostId == postId && (c.ParentCommentId == "" || c.ParentCommentId == null));
+                break;
+            default:
+                response = await _commentRepository.GetPostCommentsDescendingByInteractionCount(skip, take, c => !c.IsDeleted && c.PostId == postId && (c.ParentCommentId == "" || c.ParentCommentId == null));
+                break;
+        }
+        
         
         List<CommentGetDto> comments = _mapper.Map<List<PostComment>, List<CommentGetDto>>(response);
         
@@ -204,4 +224,8 @@ public class PostCommentService : IPostCommentService
         return Response<NoContent>.Success(ResponseStatus.Success);
     }
 
+    public async Task<Response<List<string>>> GetCommentFilterParameters()
+    {
+        return Response<List<string>>.Success(Enum.GetNames(typeof(CommentFilter)).ToList(), ResponseStatus.Success);   
+    }
 }
