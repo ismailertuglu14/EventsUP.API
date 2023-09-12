@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.OpenApi.Extensions;
 using Topluluk.Services.PostAPI.Model.Dto;
 using Topluluk.Services.PostAPI.Services.Interface;
 using Topluluk.Shared.BaseModels;
 using Topluluk.Shared.Dtos;
-
 namespace Topluluk.Services.PostAPI.Controllers;
+
+
 
 [ApiController]
 [Route("Post")]
@@ -15,11 +17,19 @@ public class PostCommentController : BaseController
     {
         _commentService = commentService;
     }
-    
+
+
     [HttpGet("{id}/comments")]
-    public async Task<Response<List<CommentGetDto>>> GetComments(string id, int skip, int take)
+    public async Task<Response<List<CommentGetDto>>> GetComments(string id,string filter, int skip, int take)
     {
-        return await _commentService.GetComments(this.UserId, id, skip, take);
+        CommentFilter parsedFilter = CommentFilter.InteractionDescending;
+        if (Enum.IsDefined(typeof(CommentFilter), filter))
+        {
+            Enum.TryParse<CommentFilter>(filter, out CommentFilter commentFilter);
+            parsedFilter = commentFilter;
+        }
+
+        return await _commentService.GetComments(this.UserId, id, parsedFilter, skip, take);
     }
     
     [HttpGet("comment/{commentId}/replies")]
@@ -32,6 +42,7 @@ public class PostCommentController : BaseController
     public async Task<Response<NoContent>> Comment(CommentCreateDto commentDto)
     {
         commentDto.UserId = UserId;
+
         return await _commentService.CreateComment(commentDto);
     }
     
@@ -55,5 +66,9 @@ public class PostCommentController : BaseController
         return await _commentService.Interaction(this.UserId, commentId, type);
     }
 
-    
+    [HttpGet("comment/filter-list")]
+    public async Task<Response<List<string>>> GetCommentFilterParamters()
+    {
+        return await _commentService.GetCommentFilterParameters();
+    }
 }
