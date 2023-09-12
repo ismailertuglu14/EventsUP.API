@@ -6,7 +6,6 @@ using Topluluk.Services.AuthenticationAPI.Services.Interface;
 using Topluluk.Shared.BaseModels;
 using Topluluk.Shared.Dtos;
 
-// For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace Topluluk.Services.AuthenticationAPI.Controllers
 { 
@@ -20,6 +19,11 @@ namespace Topluluk.Services.AuthenticationAPI.Controllers
             _externalAuthenticationService = externalAuthenticationService;
         }
 
+        /// <summary>
+        /// SignIn with username or email
+        /// </summary>
+        /// <param name="userDto"></param>
+        /// <returns></returns>
         [HttpPost("SignIn")]
         public async Task<Response<TokenDto>> SignIn(SignInUserDto userDto)
         {
@@ -38,13 +42,13 @@ namespace Topluluk.Services.AuthenticationAPI.Controllers
             return await _externalAuthenticationService.SignInWithGoogle(dto);
         }
 
-        [HttpPost("[action]")]
+        [HttpPost("SignUp")]
         public async Task<Response<TokenDto>> SignUp(CreateUserDto userDto)
         {
             return await _authenticationService.SignUp(userDto);
         }
 
-        [HttpPost("[action]")]
+        [HttpPost("SignOut")]
         public async Task<Response<NoContent>> SignOut(SignOutUserDto userDto)
         {
             return await _authenticationService.SignOut(this.UserId, userDto);
@@ -65,14 +69,7 @@ namespace Topluluk.Services.AuthenticationAPI.Controllers
         {
             return await _authenticationService.ResetPassword( resetPasswordDto);
         }
-        // @@@@@@@@@@@ Http Requests @@@@@@@@@@@@@@@
 
-        [HttpPost("delete")]
-        public async Task<Response<NoContent>> Delete(UserDeleteDto dto)
-        {
-
-            return await _authenticationService.DeleteUser(this.UserId, dto);
-        }
 
         [HttpPost("change-password")]
         public async Task<Response<NoContent>> ChangePassword(PasswordChangeDto passwordDto)
@@ -80,6 +77,27 @@ namespace Topluluk.Services.AuthenticationAPI.Controllers
             return await _authenticationService.ChangePassword(this.UserId, passwordDto);
         }
 
+        // @@@@@@@@@@@ Http Requests @@@@@@@@@@@@@@@
+
+        /// <summary>
+        /// When the method of deleting the account in the user service is run
+        /// a request is sent here to delete the Credentials.
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
+        [HttpPost("delete")]
+        public async Task<Response<NoContent>> Delete(UserDeleteDto dto)
+        {
+
+            return await _authenticationService.DeleteUser(this.UserId, dto);
+        }
+
+        /// <summary>
+        /// When the method of update profile in the user service is run
+        /// update email and username if it's changed
+        /// </summary>
+        /// <param name="userDto"></param>
+        /// <returns></returns>
         [HttpPost("update-profile")]
         public async Task<Response<NoContent>> UpdateProfile(UserUpdateDto userDto)
         {
