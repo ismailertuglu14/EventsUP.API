@@ -1,7 +1,7 @@
 ﻿using System;
 namespace Topluluk.Shared.Dtos
 {
-    public class TokenDto
+    public record struct TokenDto
     {
         public string AccessToken { get; set; }
         public string RefreshToken { get; set; }
