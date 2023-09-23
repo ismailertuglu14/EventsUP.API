@@ -35,7 +35,6 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             _logger = logger;
 		}
 
-           
         public async Task<Response<TokenDto>> SignIn(SignInUserDto userDto, string? ipAdress, string? deviceId)
         {
             TokenHelper _tokenHelper = new TokenHelper(_configuration);
@@ -132,35 +131,25 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
 
         public async Task<Response<NoContent>> SignOut(string userId,SignOutUserDto userDto)
         {
-      
             if (userId.IsNullOrEmpty() || userDto.RefreshToken.IsNullOrEmpty())
                 throw new Exception("User Not Found");
-
             UserCredential? user = await _repository.GetFirstAsync(u => u.Id == userId);
-
             if (user == null)
                 return Response<NoContent>.Fail("User not found!", ResponseStatus.NotFound);
-            
             user.RefreshToken = null;
             _repository.Update(user);
             return Response<NoContent>.Success(ResponseStatus.Success);
-
-
         }
         public async Task<Response<TokenDto>> CreateAccessTokenByRefreshToken(string refreshToken)
         {
             TokenHelper _tokenHelper = new TokenHelper(_configuration);
             UserCredential? user = await _repository.GetFirstAsync(u => u.RefreshToken == refreshToken);
-
             if (user == null)
                 return Response<TokenDto>.Fail("User not found!", ResponseStatus.Unauthorized);
-
             if (user.RefreshTokenEndDate < DateTime.Now)
                 return Response<TokenDto>.Fail("Refresh token expired!", ResponseStatus.NotAuthenticated);
-
             TokenDto token = _tokenHelper.CreateAccessToken(user.Id, user.UserName, user.Role, 2);
             UpdateRefreshToken(user, token, 2);
-
             return Response<TokenDto>.Success(token, ResponseStatus.Success);
         }
 
@@ -196,7 +185,6 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             {
                 return Response<NoContent>.Fail("UnAuthorized", ResponseStatus.Unauthorized);
             }
-
             return Response<NoContent>.Success(ResponseStatus.Success);
         }
 
@@ -215,7 +203,6 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
                 {
                     return Response<NoContent>.Fail("Token expired", ResponseStatus.NotAuthenticated);
                 }
-
                 if (user.ResetPasswordCode == passwordDto.Code)
                 {
                     user.HashedPassword = PasswordFunctions.HashPassword(passwordDto.NewPassword);
@@ -224,36 +211,33 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
                     _repository.Update(user);
                     return Response<NoContent>.Success(ResponseStatus.Success);
                 }
-
             }
-
             return Response<NoContent>.Fail("Failed", ResponseStatus.Failed);
         }
 
         public async Task<Response<NoContent>> ChangePassword(string userId, PasswordChangeDto passwordDto)
         {
-
             UserCredential? user = await _repository.GetFirstAsync(u => u.Id == userId);
-                
             if (user == null)
             {
                 return Response<NoContent>.Fail("Not Found", ResponseStatus.NotFound);
             }
-
             var verifiedPassword = PasswordFunctions.VerifyPassword(passwordDto.OldPassword, user.HashedPassword);
-
             if (verifiedPassword == false)
             {
                 return Response<NoContent>.Fail("Not authenticated", ResponseStatus.NotAuthenticated);
             }
-
             user.HashedPassword = PasswordFunctions.HashPassword(passwordDto.NewPassword);
             _repository.Update(user);
-
             return Response<NoContent>.Success(ResponseStatus.Success);
         }
 
-        // UserName and Email must be unique
+        /// <summary>
+        /// Checks if username and email is unique.
+        /// </summary>
+        /// <param name="userName">UserName must be unique</param>
+        /// <param name="email">Email must be unique</param>
+        /// <returns></returns>
         public async Task<Response<NoContent>> CheckUserNameAndEmailUnique(string userName, string email)
         {
             DatabaseResponse response = new();
@@ -269,7 +253,6 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             {
                 return Response<NoContent>.Success(ResponseStatus.Success);
             }
-
             return Response<NoContent>.Fail(response.ErrorMessage, ResponseStatus.InitialError);
         }
 
@@ -280,56 +263,34 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             user.RefreshTokenEndDate = token.ExpiredAt.AddMonths(month);
             _repository.UpdateRefreshToken(user);
         }
- 
-       
-       
-
-       
-
         public async Task<Response<NoContent>> DeleteUser(string id, UserDeleteDto userDto)
         {
-            try
+            if (!id.IsNullOrEmpty())
             {
-                if (!id.IsNullOrEmpty())
-                {
-                    _repository.DeleteById(id);
-                    return Response<NoContent>.Success(ResponseStatus.Success);
-
-                }
-
-                return Response<NoContent>.Fail("UnAuthorized", ResponseStatus.NotAuthenticated);
+                _repository.DeleteById(id);
+                return Response<NoContent>.Success(ResponseStatus.Success);
             }
-            catch (Exception e)
-            {
-                return Response<NoContent>.Fail($"Error occured {e}", ResponseStatus.InitialError);
-            }
+            return Response<NoContent>.Fail("UnAuthorized", ResponseStatus.NotAuthenticated);
         }
 
         public async Task<Response<NoContent>> UpdateProfile(string userId, UserUpdateDto userDto)
         {
-
             UserCredential user = await _repository.GetFirstAsync(u => u.Id == userId);
-
             if (user == null)
             {
                 return Response<NoContent>.Fail("User not found", ResponseStatus.NotFound);
             }
-
             if (user.Id != userId)
             {
                 return Response<NoContent>.Fail("UnAuthorized",ResponseStatus.Unauthorized);
             }
-
             user.UserName = userDto.UserName;
             user.Email = userDto.Email;
-
             DatabaseResponse response = _repository.Update(user);
-
             if (response.IsSuccess)
             {
                 return Response<NoContent>.Success(ResponseStatus.Success);
             }
-
             return Response<NoContent>.Fail("Failed", ResponseStatus.InitialError);
         }
         public string GenerateResetPasswordToken(string email)
@@ -339,9 +300,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             {
                 rng.GetBytes(tokenBytes);
             }
-
             string token = Convert.ToBase64String(tokenBytes);
-
             return token;
         }
     }
