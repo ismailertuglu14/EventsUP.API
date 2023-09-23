@@ -7,7 +7,7 @@ using Topluluk.Shared.Dtos;
 
 
 namespace Topluluk.Services.AuthenticationAPI.Controllers
-{ 
+{
     public class AuthenticationController : BaseController
     {
         private readonly IAuthenticationService _authenticationService;
@@ -37,7 +37,7 @@ namespace Topluluk.Services.AuthenticationAPI.Controllers
         }
 
         [HttpPost("SignUp")]
-        public async Task<Response<TokenDto>> SignUp(CreateUserDto userDto)
+        public async Task<Response<TokenDto?>> SignUp(CreateUserDto userDto)
         {
             return await _authenticationService.SignUp(userDto);
         }
@@ -52,18 +52,18 @@ namespace Topluluk.Services.AuthenticationAPI.Controllers
         {
             return await _authenticationService.ResetPasswordRequest(mail.Mail);
         }
+
         [HttpPost("check-otp")]
         public async Task<Response<NoContent>> ResetPasswordCheckOTPCode(ResetPasswordCheckOTPDto dto)
         {
             return await _authenticationService.ResetPasswordCheckOTP(dto);
         }
-        
+
         [HttpPost("reset-password")]
         public async Task<Response<NoContent>> ResetPassword( ResetPasswordDto resetPasswordDto)
         {
             return await _authenticationService.ResetPassword( resetPasswordDto);
         }
-
 
         [HttpPost("change-password")]
         public async Task<Response<NoContent>> ChangePassword(PasswordChangeDto passwordDto)
@@ -71,7 +71,7 @@ namespace Topluluk.Services.AuthenticationAPI.Controllers
             return await _authenticationService.ChangePassword(this.UserId, passwordDto);
         }
 
-        // @@@@@@@@@@@ Http Requests @@@@@@@@@@@@@@@
+        // @@@@@@@@@@@ HTTP Requests @@@@@@@@@@@@@@@
 
         /// <summary>
         /// When the method of deleting the account in the user service is run

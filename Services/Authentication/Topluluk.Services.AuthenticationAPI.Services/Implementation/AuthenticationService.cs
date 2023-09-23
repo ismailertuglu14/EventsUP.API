@@ -88,13 +88,13 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             return Response<TokenDto>.Fail("Username or password wrong!", ResponseStatus.NotAuthenticated);
         }
 
-        public async Task<Response<TokenDto>> SignUp(CreateUserDto userDto)
+        public async Task<Response<TokenDto?>> SignUp(CreateUserDto userDto)
         {
             var checkUniqueResult = await CheckUserNameAndEmailUnique(userDto.UserName, userDto.Email);
 
             if (!checkUniqueResult.IsSuccess)
             {
-                return Response<TokenDto>.Fail(checkUniqueResult.Errors, ResponseStatus.InitialError);
+                return Response<TokenDto?>.Fail(checkUniqueResult.Errors, ResponseStatus.InitialError);
             }
             var response = await _repository.InsertAsync(new UserCredential
             {
@@ -118,7 +118,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             if (!userInsertResponse.IsSuccessful)
             {
                 _repository.DeleteCompletely(response.Data);
-                return Response<TokenDto>.Fail("Error occurred while user inserting!", ResponseStatus.InitialError);
+                return Response<TokenDto?>.Fail("Error occurred while user inserting!", ResponseStatus.InitialError);
             }
             var role = new List<string>() { UserRoles.USER };
             var token = new TokenHelper(_configuration).CreateAccessToken(response.Data, userDto.UserName, role, 2);
@@ -126,7 +126,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             UpdateRefreshToken(user, token, 2);
             SendRegisteredMail sendRegisteredMail = new(_endpointProvider);
             //sendRegisteredMail.send(userDto.FirstName, userDto.LastName, userDto.Email);
-            return Response<TokenDto>.Success(token, ResponseStatus.Success);
+            return Response<TokenDto?>.Success(token, ResponseStatus.Success);
         }
 
         public async Task<Response<NoContent>> SignOut(string userId,SignOutUserDto userDto)

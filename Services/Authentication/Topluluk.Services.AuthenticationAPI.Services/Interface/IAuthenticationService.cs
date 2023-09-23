@@ -9,14 +9,14 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Interface
 	public interface IAuthenticationService
 	{
 		Task<Response<TokenDto>> SignIn(SignInUserDto userDto, string? ipAdress, string? deviceId);
-		Task<Response<TokenDto>> SignUp(CreateUserDto userDto);
+		Task<Response<TokenDto?>> SignUp(CreateUserDto userDto);
         Task<Response<NoContent>> SignOut(string userId, SignOutUserDto userDto);
         Task<Response<TokenDto>> CreateAccessTokenByRefreshToken(string refreshToken);
         Task<Response<NoContent>> ResetPasswordRequest(string email);
         Task<Response<NoContent>> ResetPasswordCheckOTP(ResetPasswordCheckOTPDto codeDto);
         Task<Response<NoContent>> ResetPassword(ResetPasswordDto passwordDto);
         Task<Response<NoContent>> CheckUserNameAndEmailUnique(string userName, string email);
-        // Http Request
+        // HTTP Request
         Task<Response<NoContent>> DeleteUser(string id, UserDeleteDto userDto);
         Task<Response<NoContent>> ChangePassword(string userId, PasswordChangeDto passwordDto);
 		Task<Response<NoContent>> UpdateProfile(string userId, UserUpdateDto userDto);
