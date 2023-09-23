@@ -35,12 +35,11 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             _logger = logger;
 		}
 
+           
         public async Task<Response<TokenDto>> SignIn(SignInUserDto userDto, string? ipAdress, string? deviceId)
         {
             TokenHelper _tokenHelper = new TokenHelper(_configuration);
-
             UserCredential? user = new();
-        
             if (!userDto.UserName.IsNullOrEmpty())
             {
                 user = await _repository.GetFirstAsync(u => u.UserName == userDto.UserName && u.Provider == userDto.Provider);
@@ -49,11 +48,10 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             {
                 user = await _repository.GetFirstAsync(u => u.Email == userDto.Email && u.Provider == userDto.Provider);
             }
-
             if(user != null)
             {
-                var verifiedPassword = PasswordFunctions.VerifyPassword(userDto.Password, user.HashedPassword);
-                if(verifiedPassword)
+                var isPasswordVerified = PasswordFunctions.VerifyPassword(userDto.Password, user.HashedPassword);
+                if(isPasswordVerified)
                 {
                     // Dead code fix later.b
                     if (DateTime.Now < user.LockoutEnd)
@@ -64,16 +62,18 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
                     user.AccessFailedCount = 0;
                     user.LockoutEnd = DateTime.MinValue;
                     user.Locked = false;
-                    
                     UpdateRefreshToken(user,token,2);
-
-                    LoginLog loginLog = new() { UserId = user.Id, IpAdress = ipAdress, DeviceId = deviceId };
+                    LoginLog loginLog = new()
+                    {
+                        UserId = user.Id,
+                        IpAdress = ipAdress ?? "",
+                        DeviceId = deviceId ?? ""
+                    };
                     await _loginLogRepository.InsertAsync(loginLog);
 
                     return Response<TokenDto>.Success(token, ResponseStatus.Success);
                 }
                 // User found but password wrong.
-
                 if(user.AccessFailedCount < 15)
                 {
                     user.AccessFailedCount += 1;
@@ -82,12 +82,10 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
                 {
                     user.Locked = true;
                     user.LockoutEnd = DateTime.Now.AddMinutes(20);
-
                     // todo We have to send a mail to user about someone wants to login without permission him/her account.
                 }
                 _repository.Update(user);
             }
-            
             return Response<TokenDto>.Fail("Username or password wrong!", ResponseStatus.NotAuthenticated);
         }
 
@@ -100,47 +98,37 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
                 return Response<TokenDto>.Fail(checkUniqueResult.Errors, ResponseStatus.InitialError);
             }
             var response = await _repository.InsertAsync(new UserCredential
-                {
-                    UserName = userDto.UserName,
-                    Email = userDto.Email,
-                    Provider = userDto.Provider,
-                    HashedPassword = PasswordFunctions.HashPassword(userDto.Password),
-                });
-
-                var content = new UserInsertDto
-                {
-                    Id = response.Data,
-                    FirstName = userDto.FirstName,
-                    LastName = userDto.LastName,
-                    UserName = userDto.UserName,
-                    Email = userDto.Email,
-                    BirthdayDate = DateTime.Now,
-                    Gender = userDto.Gender
-                };
-
-                var userInsertRequest = new RestRequest("https://localhost:7202/user/insertuser").AddBody(content);
-                var userInsertResponse = await _client.ExecutePostAsync(userInsertRequest);
-
-                if (!userInsertResponse.IsSuccessful)
-                {
-                    _repository.DeleteCompletely(response.Data);
-                    return Response<TokenDto>.Fail("Error occurred while user inserting!", ResponseStatus.InitialError);
-                }
-
-                var role = new List<string>() { UserRoles.USER };
-                var token = new TokenHelper(_configuration).CreateAccessToken(response.Data, userDto.UserName, role ,2);
-                var user = _repository.GetFirst(u => u.UserName == userDto.UserName);
-                UpdateRefreshToken(user, token, 2);
-
-                SendRegisteredMail sendRegisteredMail = new(_endpointProvider);
-
-                //sendRegisteredMail.send(userDto.FirstName, userDto.LastName, userDto.Email);
-                
-
-                return Response<TokenDto>.Success(token, ResponseStatus.Success);
-   
+            {
+                UserName = userDto.UserName,
+                Email = userDto.Email,
+                Provider = userDto.Provider,
+                HashedPassword = PasswordFunctions.HashPassword(userDto.Password),
+            });
+            var content = new UserInsertDto
+            {
+                Id = response.Data,
+                FirstName = userDto.FirstName,
+                LastName = userDto.LastName,
+                UserName = userDto.UserName,
+                Email = userDto.Email,
+                BirthdayDate = DateTime.Now,
+                Gender = userDto.Gender
+            };
+            var userInsertRequest = new RestRequest("https://localhost:7202/user/insertuser").AddBody(content);
+            var userInsertResponse = await _client.ExecutePostAsync(userInsertRequest);
+            if (!userInsertResponse.IsSuccessful)
+            {
+                _repository.DeleteCompletely(response.Data);
+                return Response<TokenDto>.Fail("Error occurred while user inserting!", ResponseStatus.InitialError);
+            }
+            var role = new List<string>() { UserRoles.USER };
+            var token = new TokenHelper(_configuration).CreateAccessToken(response.Data, userDto.UserName, role, 2);
+            var user = _repository.GetFirst(u => u.UserName == userDto.UserName);
+            UpdateRefreshToken(user, token, 2);
+            SendRegisteredMail sendRegisteredMail = new(_endpointProvider);
+            //sendRegisteredMail.send(userDto.FirstName, userDto.LastName, userDto.Email);
+            return Response<TokenDto>.Success(token, ResponseStatus.Success);
         }
-
 
         public async Task<Response<NoContent>> SignOut(string userId,SignOutUserDto userDto)
         {
@@ -159,6 +147,24 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
 
 
         }
+        public async Task<Response<TokenDto>> CreateAccessTokenByRefreshToken(string refreshToken)
+        {
+            TokenHelper _tokenHelper = new TokenHelper(_configuration);
+            UserCredential? user = await _repository.GetFirstAsync(u => u.RefreshToken == refreshToken);
+
+            if (user == null)
+                return Response<TokenDto>.Fail("User not found!", ResponseStatus.Unauthorized);
+
+            if (user.RefreshTokenEndDate < DateTime.Now)
+                return Response<TokenDto>.Fail("Refresh token expired!", ResponseStatus.NotAuthenticated);
+
+            TokenDto token = _tokenHelper.CreateAccessToken(user.Id, user.UserName, user.Role, 2);
+            UpdateRefreshToken(user, token, 2);
+
+            return Response<TokenDto>.Success(token, ResponseStatus.Success);
+        }
+
+
         public async Task<Response<NoContent>> ResetPasswordRequest(string email)
         {
             UserCredential? user = await _repository.GetFirstAsync(u => u.Email == email);
