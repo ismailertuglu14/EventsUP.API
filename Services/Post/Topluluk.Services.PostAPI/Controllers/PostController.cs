@@ -13,17 +13,17 @@ namespace Topluluk.Services.PostAPI.Controllers
 {
     public class PostController : BaseController
     {
-        
+
 
         private readonly IPostService _postService;
-    
+
         private readonly ITestPostService _test;
         public PostController(IPostService postService, ITestPostService test)
         {
             _postService = postService;
             _test = test;
         }
-    
+
         [HttpPost("test/create")]
         public async Task<Response<NoContent>> CreateTestPost(int count)
         {
@@ -56,7 +56,7 @@ namespace Topluluk.Services.PostAPI.Controllers
         public async Task<Response<string>> Create( [FromForm] CreatePostDto postDto)
         {
             postDto.UserId = UserId;
-            return await _postService.Create(this.UserId, postDto);
+            return await _postService.Create(this.Token, this.UserId, postDto);
         }
 
         [HttpPost("Delete")]
@@ -66,11 +66,6 @@ namespace Topluluk.Services.PostAPI.Controllers
             return await _postService.Delete(postDto);
         }
 
-
-     
-
-      
-
         [HttpGet("saved-posts")]
         public async Task<Response<List<GetPostForFeedDto>>> GetSavedPosts()
         {
@@ -79,24 +74,8 @@ namespace Topluluk.Services.PostAPI.Controllers
         [HttpPost("save/{postId}")]
         public async Task<Response<string>> SavePost(string postId)
         {
-            return await _postService.SavePost(this.UserId, postId);
+            return await _postService.SavePost(this.Token,this.UserId, postId);
         }
-        [HttpGet("interactions/{postId}")]
-        public async Task<Response<List<UserInfoDto>>> GetInteractions(string postId,int type, int take, int skip)
-        {
-            return await _postService.GetInteractions(this.UserId,postId,type, take,skip);
-        }
-        [HttpPost("interaction/{postId}")]
-        public async Task<Response<string>> Interaction(string postId,PostInteractionCreateDto createDto)
-        {
-            return await _postService.Interaction(this.UserId,postId, createDto);
-        }
-        [HttpPost("remove-interaction/{postId}")]
-        public async Task<Response<string>> RemoveInteraction(string postId)
-        {
-            return await _postService.RemoveInteraction(this.UserId, postId);
-        }
-
 
         // Http Calls
 
