@@ -17,7 +17,6 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Core
             AddServicesForRepository(services);
             AddServicesForServices(services);
         }
-
         private static void AddServicesForRepository(this IServiceCollection services)
         {
             services.AddSingleton<IDbConfiguration, AuthenticationAPIDbSettings>();
@@ -37,7 +36,6 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Core
         {
         //    services.
         }
-   
     }
 }
 

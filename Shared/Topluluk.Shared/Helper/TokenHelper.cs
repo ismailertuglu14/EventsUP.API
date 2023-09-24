@@ -43,7 +43,7 @@ namespace Topluluk.Shared.Helper
             token = token.Split("Bearer ")[1];
             var handler = new JwtSecurityTokenHandler();
             var jwtSecurityToken = handler.ReadJwtToken(token);
-            var userId = jwtSecurityToken.Claims.FirstOrDefault(c => c.Type == Enum.GetName(typeof(TokenFieldEnum),TokenFieldEnum.ID) || c.Type == ClaimTypes.NameIdentifier )?.Value;
+            var userId = jwtSecurityToken.Claims.FirstOrDefault(c => c.Type == Enum.GetName(typeof(TokenFieldEnum),TokenFieldEnum.ID) || c.Type == ClaimTypes.NameIdentifier)?.Value;
 
             return userId ?? throw new Exception($"{typeof(TokenHelper).Name}:UserId not found in token");
         }
@@ -84,7 +84,6 @@ namespace Topluluk.Shared.Helper
             return token;
         }
 
-       
         public static bool GetByTokenControl(HttpRequest request)
         {
             if (request != null && request.Headers != null && request.Headers["Authorization"].Count == 0)
@@ -97,10 +96,7 @@ namespace Topluluk.Shared.Helper
 
         public TokenDto CreateAccessToken( string userId, string userName, List<string> roles ,int month = 6)
 		{
-			TokenDto token = new();
             SymmetricSecurityKey securityKey = new(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
-
-            // Şifrlenmiş kimliği oluşturuyoruz.
             SigningCredentials signingCredentials = new(securityKey, SecurityAlgorithms.HmacSha256);
             var authClaims = new List<Claim>()
             {
@@ -111,31 +107,27 @@ namespace Topluluk.Shared.Helper
             {
                 authClaims.Add(new Claim(Enum.GetName(typeof(TokenFieldEnum),TokenFieldEnum.ROLES)!, userRole));
             }
-            // Oluşturulacak token ayarlarını veriyoruz.
-            token.ExpiredAt = DateTime.UtcNow.AddMonths(month);
-
+            DateTime tokenExpiredAt = DateTime.UtcNow.AddMonths(month);
             JwtSecurityToken securityToken = new(
-                expires: token.ExpiredAt,
-                notBefore: DateTime.UtcNow, // Bu token üretildiği anda devreye girecek
-                signingCredentials: signingCredentials, // Security key buradaki bilgiler doğrultusunda olacak.
+                expires: tokenExpiredAt,
+                notBefore: DateTime.UtcNow,
+                signingCredentials: signingCredentials,
                 claims: authClaims
             );
-
-            // Token oluşturucu sınıfından bir örnek alalım.
             JwtSecurityTokenHandler tokenHandler = new();
-            token.AccessToken = tokenHandler.WriteToken(securityToken);
-
-            token.RefreshToken = CreateRefreshToken();
-
-            return token;
+            return new()
+            {
+                AccessToken = tokenHandler.WriteToken(securityToken),
+                RefreshToken = CreateRefreshToken(),
+                ExpiredAt = tokenExpiredAt
+            };
         }
 
         public  string CreateRefreshToken()
         {
             byte[] number = new byte[32];
-            using RandomNumberGenerator random = RandomNumberGenerator.Create(); // Using yazmamızın sebebi RnadomNumberGenerator nesnemiz IDisposable dan miras almış olması
+            using RandomNumberGenerator random = RandomNumberGenerator.Create();
             random.GetBytes(number);
-
             return Convert.ToBase64String(number);
         }
 
