@@ -29,7 +29,7 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
             var collectionName = GetCollectionName();
 
             var filter = Builders<Post>.Filter.And(
-                Builders<Post>.Filter.Eq(p => p.UserId, userId),
+                Builders<Post>.Filter.Eq(p => p.User.Id, userId),
                 Builders<Post>.Filter.Eq(p => p.IsDeleted, false));
 
             var update = Builders<Post>.Update.Set(p => p.IsDeleted, true);
@@ -62,7 +62,6 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
             var documents = await cursor.ToListAsync();
             return documents;
         }
-        
     }
 }
 

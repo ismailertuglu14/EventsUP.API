@@ -7,16 +7,13 @@ namespace Topluluk.Services.PostAPI.Model.Entity
 {
 	public class Post : AbstractEntity
 	{
-		public string UserId { get; set; } 
+		public User User { get; set; }
 		public string? CommunityId { get; set; }
 		public List<FileModel> Files { get; set; }
 		public string Description { get; set; }
 		public bool IsShownOnProfile { get; set; } = true;
-
         public string? CommunityLink { get; set; }
-
         public string? EventLink { get; set; }
-        
 		public Post()
 		{
 			Files = new List<FileModel>();
@@ -42,7 +39,7 @@ namespace Topluluk.Services.PostAPI.Model.Entity
 				case ".bmp":
 				case ".gif":
 				case ".webp":
-				case ".jfif":	
+				case ".jfif":
 					return FileType.IMAGE;
 				case ".mp4":
 				case ".avi":

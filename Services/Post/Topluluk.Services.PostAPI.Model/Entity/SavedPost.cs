@@ -10,6 +10,6 @@ namespace Topluluk.Services.PostAPI.Model.Entity
     public class SavedPost : AbstractEntity
     {
         public string PostId { get; set; }
-        public string UserId { get; set; }
+        public User User { get; set; }
     }
 }

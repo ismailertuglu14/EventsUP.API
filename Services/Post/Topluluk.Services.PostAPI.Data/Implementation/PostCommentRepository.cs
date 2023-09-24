@@ -48,8 +48,8 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
 
         public async Task<List<PostComment>> GetPostCommentsDescendingDate(int skip, int take, Expression<Func<PostComment, bool>> predicate)
         {
-            
-            
+
+
             try
             {
                 var database = GetConnection();
@@ -61,7 +61,7 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
                     .Skip(skip * take)
                     .Limit(take)
                     .ToCursorAsync();
-                
+
                 return await cursor.ToListAsync();
             }
             catch(Exception e)
@@ -129,7 +129,7 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
             var filter = Builders<PostComment>.Filter.In(x => x.PostId, postIds)
                          & Builders<PostComment>.Filter.Eq(x => x.IsDeleted, false)
                          & Builders<PostComment>.Filter.Eq( x => x.ParentCommentId, null);
-                
+
             var comments = await database.GetCollection<PostComment>(collectionName).Find(filter).ToListAsync();
 
             var postCommentCounts = new Dictionary<string, int>();
@@ -154,7 +154,7 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
             var comments = await database.GetCollection<PostComment>(collectionName).Find(filter).ToListAsync();
 
             var commentReplyCounts = new Dictionary<string, int>();
-            
+
             foreach (var commentId in commentIds)
             {
                 var count = comments.Count(x => x.ParentCommentId == commentId);

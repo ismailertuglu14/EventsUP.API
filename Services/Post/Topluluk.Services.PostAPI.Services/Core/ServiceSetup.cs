@@ -27,7 +27,6 @@ namespace Topluluk.Services.PostAPI.Services.Core
 
         public static void AddServicesForRepository(this IServiceCollection services,IConfiguration configuration)
         {
-            
             services.AddSingleton<IDbConfiguration, PostAPIDbSettings>();
             services.AddSingleton<IConnectionFactory, MongoConnectionFactory>();
             services.AddSingleton<IBaseDatabaseSettings, MongoDatabaseSettings>();
@@ -36,7 +35,7 @@ namespace Topluluk.Services.PostAPI.Services.Core
             services.AddScoped<ICommentInteractionRepository, CommentInteractionRepository>();
             services.AddScoped<IPostCommentRepository, PostCommentRepository>();
             services.AddScoped<ISavedPostRepository, SavedPostRepository>();
-            services.AddScoped<IPostInteractionRepository,PostInteractionRepository>();   
+            services.AddScoped<IPostInteractionRepository,PostInteractionRepository>();
             services.AddSingleton<IMongoClient>(new MongoClient(configuration.GetConnectionString("MongoDB")));
         }
 
@@ -44,7 +43,10 @@ namespace Topluluk.Services.PostAPI.Services.Core
         {
             services.AddTransient<IPostService, PostService>();
             services.AddTransient<IPostCommentService,PostCommentService>();
+            services.AddTransient<IPostInteractionService,PostInteractionService>();
             services.AddTransient<ITestPostService,TestPostService>();
+            services.AddHttpContextAccessor();
+
 
         }
 
