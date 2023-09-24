@@ -14,11 +14,9 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Helpers
             {
                 rng.GetBytes(salt);
             }
-
             byte[] hash = GetHash(password, salt);
             return Convert.ToBase64String(salt) + "|" + Convert.ToBase64String(hash);
         }
-
         public static byte[] GetHash(string password, byte[] salt)
         {
             using (var sha256 = SHA256.Create())
@@ -30,9 +28,6 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Helpers
                 return sha256.ComputeHash(passwordAndSalt);
             }
         }
-
-
-
         public static bool VerifyPassword(string password, string hashedPassword)
         {
             string[] parts = hashedPassword.Split('|');
@@ -41,9 +36,6 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Helpers
             byte[] actualHash = GetHash(password, salt);
             return StructuralComparisons.StructuralEqualityComparer.Equals(actualHash, expectedHash);
         }
-
-        
-        
     }
 }
 
