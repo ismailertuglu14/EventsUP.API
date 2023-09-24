@@ -83,43 +83,32 @@ namespace Topluluk.Services.User.Services.Implementation
 
         public async Task<Response<GetUserByIdDto>> GetUserByUserName(string id, string userName)
         {
-            try
+            _User? user = await _userRepository.GetFirstAsync(u => u.UserName == userName);
+            if (user == null)
             {
-                _User? user = await _userRepository.GetFirstAsync(u => u.UserName == userName);
-                if (user == null)
-                {
-                    return await Task.FromResult(Response<GetUserByIdDto>.Fail("User Not Found",
-                        ResponseStatus.NotFound));
-                }
-
-                string key = $"user_{user.Id}";
-                var userObject = new
-                {
-                    Id = user.Id,
-                    FirstName=user.FirstName,
-                    LastName=user.LastName,
-                    ProfileImage=user.ProfileImage,
-                    Gender=user.Gender
-                };
-                var userJson = JsonSerializer.Serialize(userObject);
-                await _redisRepository.SetValueAsync(key, userJson);
-                GetUserByIdDto dto = _mapper.Map<GetUserByIdDto>(user);
-                var isFollowRequestSentTask = _followRequestRepository.AnyAsync(f => !f.IsDeleted && f.SourceId == id && f.TargetId == user.Id);
-                var isFollowRequestReceivedTask = _followRequestRepository.AnyAsync(f => !f.IsDeleted && f.SourceId == user.Id && f.TargetId == id);
-
-                dto.IsFollowRequestSent = isFollowRequestSentTask.Result;
-                dto.isFollowRequestReceived = isFollowRequestReceivedTask.Result;
-                dto.IsFollowing = await _followRepository.AnyAsync(f => f.SourceId == id && f.TargetId == id);
-                dto.FollowingCount = await _followRepository.Count(f => f.SourceId == id);
-                dto.FollowersCount = await _followRepository.Count(f => f.TargetId == id);
-
-                return await Task.FromResult(Response<GetUserByIdDto>.Success(dto, ResponseStatus.Success));
+                return await Task.FromResult(Response<GetUserByIdDto>.Fail("User Not Found",
+                    ResponseStatus.NotFound));
             }
-            catch (Exception e)
-            {
-                return await Task.FromResult(Response<GetUserByIdDto>.Fail($"Some error occured: {e}",
-                    ResponseStatus.InitialError));
-            }
+            string key = $"user_{user.Id}";
+            await _redisRepository.SetValueAsync(key, user);
+            GetUserByIdDto dto = _mapper.Map<GetUserByIdDto>(user);
+
+            var isFollowingTask = _followRepository.AnyAsync(f => !f.IsDeleted && f.SourceId == id && f.TargetId == user.Id);
+            var isFollowRequestSentTask = _followRequestRepository.AnyAsync(f => !f.IsDeleted && f.SourceId == id && f.TargetId == user.Id);
+            var isFollowRequestReceivedTask = _followRequestRepository.AnyAsync(f => !f.IsDeleted && f.SourceId == user.Id && f.TargetId == id);
+            var followingCountTask = _followRepository.Count(f => !f.IsDeleted && f.SourceId == user.Id);
+            var followersCountTask = _followRepository.Count(f => !f.IsDeleted && f.TargetId == user.Id);
+            var isTargetUserBlockedTask = _blockedUserRepository.AnyAsync(b => !b.IsDeleted && b.SourceId == id && b.TargetId == user.Id);
+            await Task.WhenAll(isFollowingTask, isFollowRequestSentTask, isTargetUserBlockedTask, isFollowRequestReceivedTask, followingCountTask, followersCountTask);
+
+            dto.IsFollowRequestSent = isFollowRequestSentTask.Result;
+            dto.isFollowRequestReceived = isFollowRequestReceivedTask.Result;
+            dto.IsBlocked = isTargetUserBlockedTask.Result;
+            dto.IsFollowing = isFollowingTask.Result;
+            dto.FollowingCount = followingCountTask.Result;
+            dto.FollowersCount = followersCountTask.Result;
+            return await Task.FromResult(Response<GetUserByIdDto>.Success(dto, ResponseStatus.Success));
+
         }
 
         public async Task<Response<string>> InsertUser(UserInsertDto userInfo)

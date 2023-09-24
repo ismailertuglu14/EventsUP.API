@@ -17,17 +17,15 @@ namespace Topluluk.Services.User.Model.Dto
         public bool IsPrivate { get; set; } = false;
         public bool IsBlocked { get; set; }
         public bool IsFollowing { get; set; }
-        
+
         ///  Is target user sent to follow request to source user
         public bool isFollowRequestReceived { get; set; }
-        
-        /// Is source user sent to follow request to target user 
+                /// Is source user sent to follow request to target user
         public bool IsFollowRequestSent { get; set; }
         public int FollowingCount { get; set; }
         public int FollowersCount { get; set; }
 
         public ICollection<string>? Communities { get; set; }
-        public int CommunityCount { get; set; }
 
         public ICollection<string>? Posts { get; set; }
 
