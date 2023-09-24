@@ -23,7 +23,7 @@ namespace Topluluk.Services.User.API.Controllers
         }
 
         [HttpGet("GetUserById")]
-       // [Authorize] 
+       // [Authorize]
         public async Task<Response<GetUserByIdDto>> GetUserById(string userId)
         {
             return await _userService.GetUserById(this.UserId, userId);
@@ -40,12 +40,6 @@ namespace Topluluk.Services.User.API.Controllers
         {
             return await _userService.GetUserSuggestions(this.UserId, limit);
         }
-
-    
-       
-
-        
-        
 
         [HttpPost("Block")]
         public async Task<Response<string>> BlockUser([FromForm] string targetId)
@@ -86,7 +80,7 @@ namespace Topluluk.Services.User.API.Controllers
         {
             return await _userService.PrivacyChange(this.UserId, dto);
         }
-        
+
         [HttpPost("update-profile")]
         public async Task<Response<NoContent>> UpdateProfile(UserUpdateProfileDto dto)
         {
@@ -127,6 +121,6 @@ namespace Topluluk.Services.User.API.Controllers
         }
     }
 
- 
+
 }
 
