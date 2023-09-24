@@ -50,6 +50,7 @@ public class ErrorHandlingMiddleware
         };
 
         var json = JsonConvert.SerializeObject(errorResponse);
+        
         return context.Response.WriteAsync(json);
     }
 

@@ -23,7 +23,7 @@ namespace Topluluk.Shared.BaseModels
         {
             return TokenHelper.GetUserRolesByToken(Request);
         }
-
+        
         [NonAction]
         private string GetUserName()
         {
