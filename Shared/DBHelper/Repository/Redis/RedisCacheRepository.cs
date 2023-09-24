@@ -15,10 +15,8 @@ public class RedisCacheRepository : IRedisRepository
     {
         _redisCon = redisCon;
         _cache = redisCon.GetDatabase();
-        
+
     }
-
-
     public bool IsConnected => _redisCon.IsConnected;
 
     public async Task<T> GetOrNullAsync<T>(string key) where T : class
@@ -35,7 +33,7 @@ public class RedisCacheRepository : IRedisRepository
     {
         await _cache.KeyDeleteAsync(key);
     }
- 
+
     public void ClearAll()
     {
         var endpoints = _redisCon.GetEndPoints(true);
@@ -63,7 +61,7 @@ public class RedisCacheRepository : IRedisRepository
         }
         return JsonSerializer.Deserialize<T>(result);
     }
- 
+
     public async Task<string> GetValueAsync(string key)
     {
         return await _cache.StringGetAsync(key);
@@ -71,7 +69,6 @@ public class RedisCacheRepository : IRedisRepository
 
     public async Task<Dictionary<string, string>> GetAllAsync(List<string> keys)
     {
-        
         var redisValues = await _cache.StringGetAsync(keys.Select(x => (RedisKey)x).ToArray());
         var result = new Dictionary<string, string>();
         for (int i = 0; i < keys.Count; i++)
@@ -93,7 +90,7 @@ public class RedisCacheRepository : IRedisRepository
         var json = JsonConvert.SerializeObject(value);
         return await _cache.StringSetAsync(key,json, ExpireTime);
     }
- 
+
     public T GetOrAdd<T>(string key, Func<T> action) where T : class
     {
         var result =  _cache.StringGet(key);
