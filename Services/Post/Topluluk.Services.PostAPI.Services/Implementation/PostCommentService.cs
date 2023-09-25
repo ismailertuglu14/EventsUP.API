@@ -151,13 +151,15 @@ public class PostCommentService : IPostCommentService
 
     public async Task<Response<NoContent>> Interaction(string userId, string commentId, int type)
     {
+        User? user = await HttpRequestHelper.GetUser(Token);
+        if(user == null) throw new UnauthorizedAccessException();
         if (!Enum.IsDefined(typeof(CommentInteractionEnum), type))
             throw new ArgumentException("Interaction Type does not allowed! Please provide valid interaction type.");
 
-        CommentInteraction commentInteraction = await _commentInteractionRepository.GetFirstAsync(c => c.CommentId == commentId && c.UserId == userId);
+        CommentInteraction commentInteraction = await _commentInteractionRepository.GetFirstAsync(c => c.CommentId == commentId && c.User.Id == userId);
         CommentInteraction interaction = new()
         {
-            UserId = userId,
+            User = user,
             CommentId = commentId,
             Type = (CommentInteractionType)type
         };

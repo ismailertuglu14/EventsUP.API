@@ -11,6 +11,8 @@ namespace Topluluk.Services.User.API.Controllers
 {
 
     [Authorize]
+    [ApiController]
+    [Route("[controller]")]
     public class UserController : BaseController
     {
         private readonly IUserService _userService;
