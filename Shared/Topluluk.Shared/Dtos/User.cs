@@ -7,7 +7,7 @@ using Topluluk.Shared.Enums;
 
 namespace Topluluk.Shared.Dtos
 {
-    public class User
+    public record User
     {
         public string Id { get; set; }
         public string FirstName { get; set; }
