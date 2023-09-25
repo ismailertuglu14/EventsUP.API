@@ -1,8 +1,6 @@
-﻿using System;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using DBHelper.Connection;
 using DBHelper.Repository.Mongo;
-using MongoDB.Bson;
 using MongoDB.Driver;
 using Topluluk.Services.PostAPI.Data.Interface;
 using Topluluk.Services.PostAPI.Model.Dto;
@@ -20,9 +18,7 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
             _commentInteractionRepository = commentInteractionRepository;
         }
         private IMongoDatabase GetConnection() => (MongoDB.Driver.IMongoDatabase)_connectionFactory.GetConnection;
-
         private string GetCollectionName() => $"{nameof(PostComment)}Collection";
-
 
         public async Task<List<PostComment>> GetPostCommentsAscendingDate(int skip, int take, Expression<Func<PostComment, bool>> predicate)
         {
@@ -37,7 +33,6 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
                     .Skip(skip * take)
                     .Limit(take)
                     .ToCursorAsync();
-
                 return await cursor.ToListAsync();
             }
             catch (Exception e)
@@ -48,8 +43,6 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
 
         public async Task<List<PostComment>> GetPostCommentsDescendingDate(int skip, int take, Expression<Func<PostComment, bool>> predicate)
         {
-
-
             try
             {
                 var database = GetConnection();
@@ -61,7 +54,6 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
                     .Skip(skip * take)
                     .Limit(take)
                     .ToCursorAsync();
-
                 return await cursor.ToListAsync();
             }
             catch(Exception e)
@@ -80,13 +72,9 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
                 var cursor = await database.GetCollection<PostComment>(collectionName)
                     .Find(predicate)
                     .ToCursorAsync();
-
                 List<PostComment> comments = await cursor.ToListAsync();
-
                 List<string> commentIds = comments.Select(c => c.Id).ToList();
-
                 Dictionary<string, CommentLikes> commentInteractions = await _commentInteractionRepository.GetCommentsInteractionCounts(commentIds);
-
                 var sortedComments = comments.OrderBy(c =>
                     commentInteractions.TryGetValue(c.Id, out var interaction)
                         ? interaction.LikeCount + interaction.DislikeCount
@@ -106,13 +94,10 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
             {
                 var database = GetConnection();
                 var collectionName = GetCollectionName();
-
                 var filter = Builders<PostComment>.Filter.And(
-                    Builders<PostComment>.Filter.Eq(p => p.UserId, userId),
+                    Builders<PostComment>.Filter.Eq(p => p.User.Id, userId),
                     Builders<PostComment>.Filter.Eq(p => p.IsDeleted, false));
-
                 var update = Builders<PostComment>.Update.Set(p => p.IsDeleted, true);
-
                 database.GetCollection<PostComment>(collectionName).UpdateMany(filter, update);
                 return await Task.FromResult(true);
             }
@@ -129,9 +114,7 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
             var filter = Builders<PostComment>.Filter.In(x => x.PostId, postIds)
                          & Builders<PostComment>.Filter.Eq(x => x.IsDeleted, false)
                          & Builders<PostComment>.Filter.Eq( x => x.ParentCommentId, null);
-
             var comments = await database.GetCollection<PostComment>(collectionName).Find(filter).ToListAsync();
-
             var postCommentCounts = new Dictionary<string, int>();
             foreach (var postId in postIds)
             {
@@ -141,7 +124,6 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
                     postCommentCounts.Add(postId, count);
                 }
             }
-
             return postCommentCounts;
         }
 
@@ -152,9 +134,7 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
             var filter = Builders<PostComment>.Filter.In(x => x.ParentCommentId, commentIds)
                          & Builders<PostComment>.Filter.Eq(x => x.IsDeleted, false);
             var comments = await database.GetCollection<PostComment>(collectionName).Find(filter).ToListAsync();
-
             var commentReplyCounts = new Dictionary<string, int>();
-
             foreach (var commentId in commentIds)
             {
                 var count = comments.Count(x => x.ParentCommentId == commentId);
@@ -163,7 +143,6 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
                     commentReplyCounts.Add(commentId, count);
                 }
             }
-
             return commentReplyCounts;
         }
 
@@ -177,13 +156,9 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
                 var cursor = await database.GetCollection<PostComment>(collectionName)
                     .Find(predicate)
                     .ToCursorAsync();
-
                 List<PostComment> comments = await cursor.ToListAsync();
-
                 List<string> commentIds = comments.Select(c => c.Id).ToList();
-
                 Dictionary<string, CommentLikes> commentInteractions = await _commentInteractionRepository.GetCommentsInteractionCounts(commentIds);
-
                 var sortedComments = comments.OrderByDescending(c =>
                        commentInteractions.TryGetValue(c.Id, out var interaction)
                            ? interaction.LikeCount + interaction.DislikeCount

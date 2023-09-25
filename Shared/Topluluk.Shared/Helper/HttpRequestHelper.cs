@@ -59,7 +59,6 @@ namespace Topluluk.Shared.Helper
                     return responseObject.Data;
                 }
             }
-
             return null;
         }
     }

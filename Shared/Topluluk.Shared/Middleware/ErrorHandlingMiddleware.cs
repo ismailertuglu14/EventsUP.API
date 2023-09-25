@@ -37,10 +37,8 @@ public class ErrorHandlingMiddleware
             ArgumentException => ResponseStatus.BadRequest,
             _ => ResponseStatus.InitialError
         };
-
         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
         context.Response.ContentType = "application/json";
-
         var errorResponse = new Response<string>
         {
             Data = null!,
@@ -48,9 +46,7 @@ public class ErrorHandlingMiddleware
             IsSuccess = false,
             Errors = new List<string> { exception.Message, exception.ToString() }
         };
-
         var json = JsonConvert.SerializeObject(errorResponse);
-
         return context.Response.WriteAsync(json);
     }
 

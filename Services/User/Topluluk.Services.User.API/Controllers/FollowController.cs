@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Topluluk.Services.User.Model.Dto;
 using Topluluk.Services.User.Services.Interface;
@@ -7,19 +8,20 @@ using Topluluk.Shared.Dtos;
 namespace Topluluk.Services.User.API.Controllers;
 
 
+[Authorize]
 [ApiController]
 [Route("User")]
 public class FollowController : BaseController
 {
 
     private readonly IFollowService _followService;
-    
+
     public FollowController(IFollowService followService)
     {
         _followService = followService;
     }
-    
-    
+
+
     [HttpPost("Follow")]
     public async Task<Response<NoContent>> FollowUser( [FromBody] UserFollowDto userFollowInfo)
     {
@@ -72,7 +74,7 @@ public class FollowController : BaseController
         return await _followService.GetUserFollowSuggestions(this.UserId);
     }
 
-    
+
     //HTTP
     [HttpGet("user-followings")]
     public async Task<Response<List<string>>> GetUserFollowings(string id)

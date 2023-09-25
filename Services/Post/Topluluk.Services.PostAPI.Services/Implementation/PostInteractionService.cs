@@ -38,7 +38,7 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
             PostInteraction _interaction = new()
             {
                 PostId = postId,
-                User = user,
+                User = user ?? new(),
                 InteractionType = interactionCreate.InteractionType
             };
             PostInteraction? _interactionDb = await _postInteractionRepository.GetFirstAsync(i => i.PostId == postId && i.User.Id == userId);
