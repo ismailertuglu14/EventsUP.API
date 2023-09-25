@@ -155,13 +155,15 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
 
         public async Task<Response<string>> Create(string token, string userId, CreatePostDto postDto)
         {
-            Post post = _mapper.Map<Post>(postDto);
-            DatabaseResponse response = new();
             User? user = await HttpRequestHelper.GetUser(token);
             if (user == null)
             {
                 return await Task.FromResult(Response<string>.Fail("User not found", ResponseStatus.NotFound));
             }
+
+            Post post = _mapper.Map<Post>(postDto);
+            DatabaseResponse response = new();
+
             post.User = user;
 
             // If communityId given
@@ -310,91 +312,72 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
 
         public async Task<Response<GetPostByIdDto>> GetPostById(string postId, string sourceUserId, bool isDeleted = false)
         {
-
-            try
-            {
-                var post = await _postRepository.GetFirstAsync(p => p.Id == postId);
-                if (post == null)
-                    throw new NotFoundException();
-                var postDto = _mapper.Map<GetPostByIdDto>(post);
-                var postIds = new List<string>
+            var post = await _postRepository.GetFirstAsync(p => p.Id == postId);
+            if (post == null)
+                throw new NotFoundException();
+            var postDto = _mapper.Map<GetPostByIdDto>(post);
+            var postIds = new List<string>
                 {
                     postDto.Id
                 };
-                var interactionCountTask =  _postInteractionRepository.PostsInteractionCounts(postIds);
-                var interactionPreviewsTask = _postInteractionRepository.GetPostInteractionPreviews(postIds);
-                var isSavedTask = _savedPostRepository.AnyAsync(p => !p.IsDeleted && p.PostId == postId && p.User.Id == sourceUserId);
-                var isInteractedTask = _postInteractionRepository.GetFirstAsync(p => p.PostId == p.Id && p.User.Id == sourceUserId);
-                var commentCountTask =  _commentRepository.Count(c => !c.IsDeleted && c.PostId == postId && (c.ParentCommentId == "" || c.ParentCommentId == null));
+            var interactionCountTask = _postInteractionRepository.PostsInteractionCounts(postIds);
+            var interactionPreviewsTask = _postInteractionRepository.GetPostInteractionPreviews(postIds);
+            var isSavedTask = _savedPostRepository.AnyAsync(p => !p.IsDeleted && p.PostId == postId && p.User.Id == sourceUserId);
+            var isInteractedTask = _postInteractionRepository.GetFirstAsync(p => p.PostId == p.Id && p.User.Id == sourceUserId);
+            var commentCountTask = _commentRepository.Count(c => !c.IsDeleted && c.PostId == postId && (c.ParentCommentId == "" || c.ParentCommentId == null));
 
-                await Task.WhenAll(interactionPreviewsTask, commentCountTask, isSavedTask, isInteractedTask, interactionCountTask);
+            await Task.WhenAll(interactionPreviewsTask, commentCountTask, isSavedTask, isInteractedTask, interactionCountTask);
 
-                postDto.IsSaved = isSavedTask.Result;
+            postDto.IsSaved = isSavedTask.Result;
 
-                postDto.InteractionCount = interactionCountTask.Result.ContainsKey(postDto.Id) ? interactionCountTask.Result[postDto.Id] : 0;
-                var interactions = interactionPreviewsTask.Result != null && interactionPreviewsTask.Result.TryGetValue(postDto.Id, out var interactionArray)
-                    ? interactionArray.ToList()
-                    : new List<PostInteractionPreviewDto>();
+            postDto.InteractionCount = interactionCountTask.Result.ContainsKey(postDto.Id) ? interactionCountTask.Result[postDto.Id] : 0;
+            var interactions = interactionPreviewsTask.Result != null && interactionPreviewsTask.Result.TryGetValue(postDto.Id, out var interactionArray)
+                ? interactionArray.ToList()
+                : new List<PostInteractionPreviewDto>();
 
-                postDto!.InteractionPreviews = interactions;
+            postDto!.InteractionPreviews = interactions;
 
-                if (isInteractedTask.Result != null)
-                {
-                    postDto.IsInteracted = new PostInteractedDto()
-                    {
-                        Interaction = isInteractedTask.Result.InteractionType
-                    };
-                }
-
-
-                var comments =  _commentRepository.GetAllAsync(10, 0, c => c.PostId == postId && (c.ParentCommentId == "" || c.ParentCommentId == null)).Result.Data as List<PostComment>;
-                var commentReplyCounts = await _commentRepository.GetCommentsReplyCounts(comments.Select(c =>c.Id).ToList());
-
-
-                if (comments != null && comments.Count > 0)
-                {
-                    postDto.CommentCount = commentCountTask.Result;
-                    List<CommentGetDto> commentDtos = _mapper.Map<List<PostComment>, List<CommentGetDto>>(comments);
-
-                    var ids = commentDtos.Select(comment => comment.UserId).ToList();
-                    IdList idList = new(ids);
-
-                    var request = new RestRequest(ServiceConstants.API_GATEWAY + "/user/get-user-info-list").AddBody(idList);
-                    var response = await _client.ExecutePostAsync<Response<List<UserInfoDto>>>(request);
-
-                    foreach (var commentDto in commentDtos)
-                    {
-                        UserInfoDto user = response.Data.Data.Where(u => u.Id == commentDto.UserId)
-                            .FirstOrDefault() ?? throw new InvalidOperationException();
-                        commentDto.ProfileImage = user.ProfileImage;
-                        commentDto.FirstName = user.FirstName;
-                        commentDto.LastName = user.LastName;
-                        commentDto.IsEdited =
-                            comments.FirstOrDefault(c => c.Id == commentDto.Id)!.PreviousMessages != null &&   comments.FirstOrDefault(c => c.Id == commentDto.Id)!.PreviousMessages.Count != 0;
-
-                        commentDto.Gender = user.Gender;
-                        commentDto.ReplyCount = commentReplyCounts.TryGetValue(commentDto.Id, out int value)
-                            ? value
-                            : 0;
-                        postDto.Comments?.Add(commentDto);
-                    }
-                }
-
-                if (post.CommunityId != null)
-                {
-                    // Get community title request
-                    var communityGetTitleRequest = new RestRequest("https://localhost:7132/Community/getCommunityTitle").AddParameter("id", post.CommunityId);
-                    var communityGetTitleResponse = await _client.ExecuteGetAsync<Response<string>>(communityGetTitleRequest);
-                    var communityResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<Response<string>>(communityGetTitleResponse.Content);
-                    postDto.CommunityTitle = communityResponse?.Data;
-                }
-
-                return Response<GetPostByIdDto>.Success(postDto, ResponseStatus.Success);
-            }
-            catch (Exception e)
+            if (isInteractedTask.Result != null)
             {
-                return Response<GetPostByIdDto>.Fail(e.ToString(), ResponseStatus.InitialError);
+                postDto.IsInteracted = new PostInteractedDto()
+                {
+                    Interaction = isInteractedTask.Result.InteractionType
+                };
             }
+
+
+            var comments = _commentRepository.GetAllAsync(10, 0, c => c.PostId == postId && (c.ParentCommentId == "" || c.ParentCommentId == null)).Result.Data as List<PostComment>;
+            var commentReplyCounts = await _commentRepository.GetCommentsReplyCounts(comments.Select(c => c.Id).ToList());
+
+
+            if (comments != null && comments.Count > 0)
+            {
+                postDto.CommentCount = commentCountTask.Result;
+                List<CommentGetDto> commentDtos = _mapper.Map<List<PostComment>, List<CommentGetDto>>(comments);
+
+                foreach (var commentDto in commentDtos)
+                {
+                    commentDto.IsEdited =
+                        comments.FirstOrDefault(c => c.Id == commentDto.Id)!.PreviousMessages != null && comments.FirstOrDefault(c => c.Id == commentDto.Id)!.PreviousMessages.Count != 0;
+
+                    commentDto.ReplyCount = commentReplyCounts.TryGetValue(commentDto.Id, out int value)
+                        ? value
+                        : 0;
+                    postDto.Comments?.Add(commentDto);
+                }
+            }
+
+            if (post.CommunityId != null)
+            {
+                // Get community title request
+                var communityGetTitleRequest = new RestRequest("https://localhost:7132/Community/getCommunityTitle").AddParameter("id", post.CommunityId);
+                var communityGetTitleResponse = await _client.ExecuteGetAsync<Response<string>>(communityGetTitleRequest);
+                var communityResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<Response<string>>(communityGetTitleResponse.Content);
+                postDto.CommunityTitle = communityResponse?.Data;
+            }
+
+            return Response<GetPostByIdDto>.Success(postDto, ResponseStatus.Success);
+
         }
 
         // Kullanıcı ekranında kullanıcının paylaşımlarını listelemek için kullanılacak action

@@ -6,7 +6,6 @@ using Topluluk.Shared.Dtos;
 
 namespace Topluluk.Services.PostAPI.Controllers
 {
-
     [ApiController]
     [Route("Post")]
     public class PostInteractionController : BaseController
