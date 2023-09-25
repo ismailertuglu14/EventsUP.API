@@ -47,7 +47,7 @@ builder.Services.AddAuthentication(options =>
     options.SaveToken = true;
     options.RequireHttpsMetadata = false;
     options.TokenValidationParameters = new TokenValidationParameters()
-    {   
+    {
         ValidateIssuer = true,
         ValidIssuer = builder.Configuration["JWT:ValidIssuer"],
         ValidateAudience = true,
