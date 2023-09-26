@@ -65,7 +65,9 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
         public async Task<Response<List<GetPostForFeedDto>>> GetPostForFeedScreen(string userId, string token,
             int skip = 0, int take = 10)
         {
-            var getUserFollowingsRequest = new RestRequest(ServiceConstants.API_GATEWAY + "/user/user-followings").AddQueryParameter("id", userId);
+            var getUserFollowingsRequest = new RestRequest(ServiceConstants.API_GATEWAY + "/user/user-followings")
+                .AddHeader("Authorization",token)
+                .AddQueryParameter("id", userId);
             var getUserFollowingsTask = _client.ExecuteGetAsync<Response<List<string>>>(getUserFollowingsRequest);
             var userCommunitiesRequest = new RestRequest(ServiceConstants.API_GATEWAY + "/community/user-communities").AddQueryParameter("id", userId);
             var userCommunitiesTask = _client.ExecuteGetAsync<Response<List<CommunityInfoPostLinkDto>>>(userCommunitiesRequest);
