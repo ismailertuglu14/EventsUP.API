@@ -20,10 +20,10 @@ public class PostCommentController : BaseController
 
 
     [HttpGet("{id}/comments")]
-    public async Task<Response<List<CommentGetDto>>> GetComments(string id,string filter, int skip, int take)
+    public async Task<Response<List<CommentGetDto>>> GetComments(string id,string? filter, int skip, int take)
     {
         CommentFilter parsedFilter = CommentFilter.InteractionDescending;
-        if (Enum.IsDefined(typeof(CommentFilter), filter))
+        if (Enum.IsDefined(typeof(CommentFilter), filter ?? "InteractionDescending"))
         {
             Enum.TryParse<CommentFilter>(filter, out CommentFilter commentFilter);
             parsedFilter = commentFilter;
