@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Topluluk.Services.User.Model.Dto;
+using Topluluk.Services.User.Model.Dto.Follow;
+using Topluluk.Services.User.Services.Implementation;
 using Topluluk.Services.User.Services.Interface;
 using Topluluk.Shared.BaseModels;
 using Topluluk.Shared.Dtos;
@@ -73,8 +75,16 @@ public class FollowController : BaseController
     {
         return await _followService.GetUserFollowSuggestions(this.UserId);
     }
-
-
+    [HttpGet("search-in-followings")]
+    public async Task<Response<List<FollowingUserDto>?>> SearchInFollowings(string id, string text, int skip = 0, int take = 10)
+    {
+        return await _followService.SearchInFollowings(this.UserId, id, text, skip, take);
+    }
+    [HttpGet("search-in-followers")]
+    public async Task<Response<List<FollowerUserDto>?>> SearchInFollowers(string id, string text, int skip = 0, int take = 10)
+    {
+        return await _followService.SearchInFollowers(this.UserId, id, text, skip, take);
+    }
     //HTTP
     [HttpGet("user-followings")]
     public async Task<Response<List<string>>> GetUserFollowings(string id)
