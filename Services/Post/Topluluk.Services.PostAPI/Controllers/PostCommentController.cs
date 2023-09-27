@@ -20,10 +20,10 @@ public class PostCommentController : BaseController
 
 
     [HttpGet("{id}/comments")]
-    public async Task<Response<List<CommentGetDto>>> GetComments(string id,string filter, int skip, int take)
+    public async Task<Response<List<CommentGetDto>>> GetComments(string id,string? filter, int skip, int take)
     {
         CommentFilter parsedFilter = CommentFilter.InteractionDescending;
-        if (Enum.IsDefined(typeof(CommentFilter), filter))
+        if (Enum.IsDefined(typeof(CommentFilter), filter ?? "InteractionDescending"))
         {
             Enum.TryParse<CommentFilter>(filter, out CommentFilter commentFilter);
             parsedFilter = commentFilter;
@@ -31,28 +31,27 @@ public class PostCommentController : BaseController
 
         return await _commentService.GetComments(this.UserId, id, parsedFilter, skip, take);
     }
-    
+
     [HttpGet("comment/{commentId}/replies")]
     public async Task<Response<List<CommentGetDto>>> GetReplies(string commentId, int skip, int take)
     {
         return await _commentService.GetReplies(commentId, skip, take);
     }
-    
+
     [HttpPost("Comment")]
     public async Task<Response<NoContent>> Comment(CommentCreateDto commentDto)
     {
-        commentDto.UserId = UserId;
-
+        commentDto.UserId = this.UserId;
         return await _commentService.CreateComment(commentDto);
     }
-    
-    
+
+
     [HttpPost("comment/delete/{id}")]
     public async Task<Response<NoContent>> DeleteComment(string id)
     {
         return await _commentService.DeleteComment(this.UserId, id);
     }
-    
+
     [HttpPut("comment/{id}/update")]
     public async Task<Response<NoContent>> UpdateComment(string id, CommentUpdateDto dto)
     {

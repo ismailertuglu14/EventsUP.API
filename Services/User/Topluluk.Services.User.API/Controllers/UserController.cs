@@ -1,6 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Topluluk.Services.User.Model.Dto;
 using Topluluk.Services.User.Model.Dto.Http;
@@ -11,19 +9,29 @@ using Topluluk.Shared.Dtos;
 
 namespace Topluluk.Services.User.API.Controllers
 {
+
+    [Authorize]
+    [ApiController]
+    [Route("[controller]")]
     public class UserController : BaseController
     {
-
         private readonly IUserService _userService;
-
         public UserController(IUserService userService)
         {
             _userService = userService;
 
         }
+        /// <summary>
+        /// Get user information after login operation is successful.
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("GetUserAfterLogin")]
+        public async Task<Response<GetUserAfterLoginDto>> GetUserAfterLogin()
+        {
+            return await _userService.GetUserAfterLogin(this.UserId);
+        }
 
         [HttpGet("GetUserById")]
-       // [Authorize]
         public async Task<Response<GetUserByIdDto>> GetUserById(string userId)
         {
             return await _userService.GetUserById(this.UserId, userId);
@@ -80,6 +88,7 @@ namespace Topluluk.Services.User.API.Controllers
         {
             return await _userService.UpdateProfile(this.UserId, this.Token, dto);
         }
+
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ For Http Calls coming from other services @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
         [HttpPost("[action]")]

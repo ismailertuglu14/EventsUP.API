@@ -35,8 +35,8 @@ public class PostInteractionRepository : MongoGenericRepository<PostInteraction>
     {
         var postInteractionDict = new Dictionary<string, PostInteraction>();
 
-        var interactedPosts = _collection.Find(p => postIds.Contains(p.PostId) && p.UserId == userId).ToList();
-        
+        var interactedPosts = _collection.Find(p => postIds.Contains(p.PostId) && p.User.Id == userId).ToList();
+
         foreach (var postInteraction in interactedPosts)
         {
             postInteractionDict[postInteraction.PostId] = postInteraction;

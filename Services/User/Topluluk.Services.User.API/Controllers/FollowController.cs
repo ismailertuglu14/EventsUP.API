@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Topluluk.Services.User.Model.Dto;
 using Topluluk.Services.User.Model.Dto.Follow;
@@ -9,6 +10,7 @@ using Topluluk.Shared.Dtos;
 namespace Topluluk.Services.User.API.Controllers;
 
 
+[Authorize]
 [ApiController]
 [Route("User")]
 public class FollowController : BaseController
