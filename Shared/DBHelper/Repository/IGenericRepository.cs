@@ -63,7 +63,7 @@ namespace DBHelper.Repository
         void ExecuteScript(string script);
         T GetByLangId(int langId, int id);
 
-        List<T> GetListByExpression(Expression<Func<T, bool>> predicate = null);    
+        List<T> GetListByExpression(Expression<Func<T, bool>> predicate = null);
         Task<List<T>> GetListByExpressionAsync(Expression<Func<T, bool>> predicate = null);
 
         List<T> GetListByExpressionPaginated(int skip, int take, Expression<Func<T, bool>> predicate = null);

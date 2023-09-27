@@ -501,45 +501,6 @@ namespace Topluluk.Services.User.Services.Implementation
 
         }
 
-        public async Task<Response<List<FollowingUserDto>>> SearchInFollowings(string id, string userId, string text, int skip = 0, int take = 10)
-        {
-            try
-            {
-                if (userId.IsNullOrEmpty())
-                {
-                    return Response<List<FollowingUserDto>>.Fail("User Not Found", ResponseStatus.BadRequest);
-                }
-
-                _User? user = await _userRepository.GetFirstAsync(u => u.Id == userId);
-
-                if (user == null)
-                {
-                    return Response<List<FollowingUserDto>>.Fail("User not found", ResponseStatus.NotFound);
-                }
-                // fixle true kısmını
-
-                var response = _followRepository.GetListByExpressionPaginated(skip, take, f => f.SourceId == userId);
-                List<string> userIds = new();
-                foreach (var userFollow in response)
-                {
-                    userIds.Add(userFollow.TargetId);
-                }
-                var followingUsers =
-                    _userRepository.GetListByExpressionPaginated(skip, take, u => userIds.Contains(u.Id)
-                        && ((u.FirstName.ToLower() + " " + u.LastName.ToLower()).Contains(text.ToLower()) || u.UserName.Contains(text.ToLower())) );
-                List<FollowingUserDto> followingUserDtos =
-                    _mapper.Map<List<_User>, List<FollowingUserDto>>(followingUsers);
-                /*DatabaseResponse response = await _userRepository.GetAllAsync(take, skip, u =>  true
-                && ((u.FirstName.ToLower() + " " + u.LastName.ToLower()).Contains(text.ToLower()) || u.UserName.Contains(text.ToLower())));
-                ;*/
-                return Response<List<FollowingUserDto>>.Success(followingUserDtos, ResponseStatus.Success);
-            }
-            catch (Exception e)
-            {
-                return Response<List<FollowingUserDto>>.Fail($"Some error occurreed : {e}", ResponseStatus.InitialError);
-            }
-        }
-
 
     }
 
