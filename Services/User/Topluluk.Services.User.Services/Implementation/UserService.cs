@@ -322,10 +322,6 @@ namespace Topluluk.Services.User.Services.Implementation
                     await _followRepository.InsertManyAsync(followDocuments);
                     _followRequestRepository.DeleteByExpression(x => followRequests.Select(f =>f.TargetId).ToList().Contains(x.TargetId));
                 }
-
-
-
-
                 return await Task.FromResult(Response<string>.Success($"Privacy status Successfully updated to {user.IsPrivate}", ResponseStatus.Success));
 
             }
@@ -394,8 +390,6 @@ namespace Topluluk.Services.User.Services.Implementation
                 {
                     return Response<NoContent>.Success( ResponseStatus.Success);
                 }
-
-
                 return Response<NoContent>.Fail("Update failed", ResponseStatus.InitialError);
             }
             catch (Exception e)
