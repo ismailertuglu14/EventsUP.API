@@ -29,6 +29,11 @@ namespace Topluluk.Services.User.API.Controllers
         {
             return await _userService.GetUserByUserName(this.UserId, userName);
         }
+        [HttpGet("GetUserAfterLogin")]
+        public async Task<Response<GetUserAfterLoginDto>> GetUserAfterLogin()
+        {
+            return await _userService.GetUserAfterLogin(this.UserId);
+        }
 
         [HttpGet("suggestions")]
         public async Task<Response<List<UserSuggestionsDto>>> GetUserSuggestions([FromQuery] int limit)

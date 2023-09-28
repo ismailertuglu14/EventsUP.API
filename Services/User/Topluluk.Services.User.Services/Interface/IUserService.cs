@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Topluluk.Services.User.Model.Dto;
+﻿using Topluluk.Services.User.Model.Dto;
 using Topluluk.Services.User.Model.Dto.Http;
 using Topluluk.Shared.Dtos;
 
@@ -19,6 +16,14 @@ namespace Topluluk.Services.User.Services.Interface
 		Task<Response<NoContent>> UnBlockUser(string sourceId, string targetId);
 		Task<Response<List<UserSearchResponseDto>>?> SearchUser(string text, string userId, int skip = 0, int take = 5);
 		Task<Response<string>> PrivacyChange(string userId, UserPrivacyChangeDto dto);
+
+		/// <summary>
+		/// This function send event to rabbitmq, Other services listen this event and update user info
+		/// </summary>
+		/// <param name="userId"></param>
+		/// <param name="token"></param>
+		/// <param name="userDto"></param>
+		/// <returns></returns>
 		Task<Response<NoContent>> UpdateProfile(string userId, string token, UserUpdateProfileDto userDto);
         // Http calls services
         // I'm using for get UserId, UserName, firstName, lastName, ProfileImage

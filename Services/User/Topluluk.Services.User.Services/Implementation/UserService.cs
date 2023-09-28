@@ -14,7 +14,7 @@ using Topluluk.Shared.Dtos;
 using _User = Topluluk.Services.User.Model.Entity.User;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using ResponseStatus = Topluluk.Shared.Enums.ResponseStatus;
-
+using _MassTransit = MassTransit;
 namespace Topluluk.Services.User.Services.Implementation
 {
     public class UserService : IUserService
@@ -26,6 +26,7 @@ namespace Topluluk.Services.User.Services.Implementation
         private readonly RestClient _client;
         private readonly IRedisRepository _redisRepository;
         private readonly IUserFollowRequestRepository _followRequestRepository;
+     //   private readonly _MassTransit.IPublishEndpoint _publishEndpoint;
         public UserService(IRedisRepository redisRepository, IUserRepository userRepository, IBlockedUserRepository blockedUserRepository, IUserFollowRepository followRepository, IMapper mapper, IUserFollowRequestRepository followRequestRepository)
         {
             _redisRepository = redisRepository;
@@ -328,13 +329,19 @@ namespace Topluluk.Services.User.Services.Implementation
             }
         }
 
+        /// <summary>
+        /// This function send event to rabbitmq, Other services listen this event and update user info
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="token"></param>
+        /// <param name="userDto"></param>
+        /// <returns></returns>
         public async Task<Response<NoContent>> UpdateProfile(string userId, string token, UserUpdateProfileDto userDto)
         {
             if (userId.IsNullOrEmpty())
             {
                 return await Task.FromResult(Response<NoContent>.Fail("", ResponseStatus.Unauthorized));
             }
-
 
             _User? user = await _userRepository.GetFirstAsync(u => u.Id == userId);
 
