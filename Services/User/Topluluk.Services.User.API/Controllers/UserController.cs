@@ -1,15 +1,9 @@
-﻿
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
+﻿using Microsoft.AspNetCore.Mvc;
 using Topluluk.Services.User.Model.Dto;
 using Topluluk.Services.User.Model.Dto.Http;
-using Topluluk.Services.User.Model.Entity;
 using Topluluk.Services.User.Services.Interface;
 using Topluluk.Shared.BaseModels;
 using Topluluk.Shared.Dtos;
-using _User = Topluluk.Services.User.Model.Entity.User;
 
 namespace Topluluk.Services.User.API.Controllers
 {
@@ -19,15 +13,8 @@ namespace Topluluk.Services.User.API.Controllers
         private readonly IUserService _userService;
 
         public UserController(IUserService userService)
-        private readonly IConnectionFactory _connectionFactory;
-        public UserController(IUserService userService, IConnectionFactory connectionFactory)
         {
             _userService = userService;
-            _connectionFactory = connectionFactory;
-        }
-        private IMongoDatabase GetConnection() => (MongoDB.Driver.IMongoDatabase)_connectionFactory.GetConnection;
-        private string GetCollectionName() => string.Format("{0}Collection", typeof(_User).Name);
-
         }
 
         [HttpGet("GetUserById")]
