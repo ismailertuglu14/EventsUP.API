@@ -3,7 +3,6 @@ using Microsoft.IdentityModel.Tokens;
 using RestSharp;
 using Topluluk.Services.User.Data.Interface;
 using Topluluk.Services.User.Model.Dto;
-using Topluluk.Services.User.Model.Dto.Follow;
 using Topluluk.Services.User.Model.Entity;
 using Topluluk.Services.User.Services.Interface;
 using Topluluk.Shared.Dtos;
@@ -263,9 +262,9 @@ public class FollowService : IFollowService
         }
     }
 
+
     public async Task<Response<List<FollowerUserDto>>> GetFollowerUsers(string currentUserId, string userId, int skip = 0, int take = 10)
     {
-
         _User? user = await _userRepository.GetFirstAsync(u => u.Id == userId);
 
         if (user == null)
@@ -282,9 +281,6 @@ public class FollowService : IFollowService
 
     }
 
-    // Source => Takip eden kullanıcı
-    // Target => Takip edilen kullanıcı
-
     public async Task<Response<List<FollowingUserDto>?>> SearchInFollowings(string currentUserId, string userId, string text, int skip = 0, int take = 10)
     {
         _User? user = await _userRepository.GetFirstAsync(u => u.Id == userId);
@@ -300,7 +296,7 @@ public class FollowService : IFollowService
         }
         var followingUsers =
             _userRepository.GetListByExpressionPaginated(skip, take, u => followingIds.Contains(u.Id)
-                && ((u.FirstName.ToLower() + " " + u.LastName.ToLower()).Contains(text.ToLower()) || u.UserName.Contains(text.ToLower())));
+                && (u.FullName.ToLower().Contains(text.ToLower()) || u.UserName.Contains(text.ToLower())));
         List<FollowingUserDto> followingUserDtos =
             _mapper.Map<List<_User>, List<FollowingUserDto>>(followingUsers);
         /*DatabaseResponse response = await _userRepository.GetAllAsync(take, skip, u =>  true
@@ -323,7 +319,7 @@ public class FollowService : IFollowService
         }
         var followersDto =
             _userRepository.GetListByExpressionPaginated(skip, take, u => followersIds.Contains(u.Id)
-                           && ((u.FirstName.ToLower() + " " + u.LastName.ToLower()).Contains(text.ToLower()) || u.UserName.Contains(text.ToLower())));
+                           && (u.FullName.ToLower().Contains(text.ToLower()) || u.UserName.Contains(text.ToLower())));
         List<FollowerUserDto> followingUserDtos =
             _mapper.Map<List<_User>, List<FollowerUserDto>>(followersDto);
         return Response<List<FollowerUserDto>?>.Success(followingUserDtos, ResponseStatus.Success);

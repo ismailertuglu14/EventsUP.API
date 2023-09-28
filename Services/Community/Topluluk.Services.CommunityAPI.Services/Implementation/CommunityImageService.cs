@@ -24,7 +24,7 @@ public class CommunityImageService : ICommunityImageService
         _communityRepository = communityRepository;
         _client = new RestClient();
     }
-    
+
       public async Task<Response<string>> UpdateCoverImage(string userId, string communityId, IFormFile file)
         {
             Community? community = await _communityRepository.GetFirstAsync(c => c.Id == communityId && c.AdminId == userId);
@@ -36,7 +36,7 @@ public class CommunityImageService : ICommunityImageService
 
             if (file == null)
                 return Response<string>.Success(community.CoverImage ?? "", ResponseStatus.Success);
-            
+
             byte[] imageBytes;
 
             using (var stream = new MemoryStream())
@@ -44,7 +44,7 @@ public class CommunityImageService : ICommunityImageService
                 await file.CopyToAsync(stream);
                 imageBytes = stream.ToArray();
             }
-            
+
             using (var client = new HttpClient())
             {
                 var content = new MultipartFormDataContent();
@@ -65,7 +65,7 @@ public class CommunityImageService : ICommunityImageService
                 var response = await client.PostAsync("https://localhost:7165/file/upload-community-cover-image", content);
                 if (response.IsSuccessStatusCode)
                 {
-                    responseData = await response.Content.ReadFromJsonAsync<Response<string>>(); 
+                    responseData = await response.Content.ReadFromJsonAsync<Response<string>>();
                     if (responseData != null)
                     {
                         var imageUrl = responseData.Data;
@@ -82,13 +82,13 @@ public class CommunityImageService : ICommunityImageService
                     // Resim yükleme işlemi başarısız
                     return await Task.FromResult(Response<string>.Fail("Failed while uploading image with http client", ResponseStatus.InitialError));
                 }
-                
+
             }
         }
-    
+
     public async Task<Response<string>> UpdateBannerImage(string userId, string communityId, IFormFile file)
         {
-            
+
             Community community = await _communityRepository.GetFirstAsync(c => c.Id == communityId);
 
             if (community == null)
@@ -99,7 +99,7 @@ public class CommunityImageService : ICommunityImageService
 
             using (var client = new HttpClient())
             {
-                
+
                 byte[] imageBytes;
 
                 using (var stream = new MemoryStream())
@@ -126,7 +126,7 @@ public class CommunityImageService : ICommunityImageService
                 var response = await client.PostAsync("https://localhost:7165/file/upload-community-banner-image", content);
                 if (response.IsSuccessStatusCode)
                 {
-                    responseData = await response.Content.ReadFromJsonAsync<Response<string>>(); 
+                    responseData = await response.Content.ReadFromJsonAsync<Response<string>>();
                     if (responseData != null)
                     {
                         var imageUrl = responseData.Data;
@@ -149,7 +149,7 @@ public class CommunityImageService : ICommunityImageService
 
     public async Task<Response<NoContent>> RemoveCoverImage(string userId, string communityId)
     {
-         
+
         Community community = await _communityRepository.GetFirstAsync(c => c.Id == communityId);
 
         if (community == null)
@@ -157,7 +157,7 @@ public class CommunityImageService : ICommunityImageService
 
         if (community.AdminId != userId)
             throw new UnauthorizedAccessException();
-        
+
         community.CoverImage = null;
         _communityRepository.Update(community);
         return Response<NoContent>.Success(ResponseStatus.Success);
@@ -165,7 +165,7 @@ public class CommunityImageService : ICommunityImageService
 
     public async Task<Response<NoContent>> RemoveBannerImage(string userId, string communityId)
     {
-         
+
         Community community = await _communityRepository.GetFirstAsync(c => c.Id == communityId);
 
         if (community == null)
@@ -173,7 +173,7 @@ public class CommunityImageService : ICommunityImageService
 
         if (community.AdminId != userId)
             throw new UnauthorizedAccessException();
-        
+
         community.BannerImage = null;
         _communityRepository.Update(community);
         return Response<NoContent>.Success(ResponseStatus.Success);

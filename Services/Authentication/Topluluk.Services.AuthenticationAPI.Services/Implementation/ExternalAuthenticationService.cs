@@ -42,7 +42,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             {
                 Audience = new List<string> { _configuration["Google:Client_Id"] ?? throw new ArgumentNullException() }
             };
-           
+
             var payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken, settings);
 
             var userCredentials = await _repository.GetFirstAsync(x => x.Email == payload.Email);
@@ -58,7 +58,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
 
             string newUserName = payload.Name.Replace(" ", "");
             string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
-            
+
             if (await _repository.GetFirstAsync(x => x.UserName == newUserName) != null)
             {
                 newUserName += timestamp;
@@ -75,8 +75,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
 
             UserInsertDto insertUserDto = new() {
                 Id = credential.Id,
-                FirstName = payload.GivenName,
-                LastName = payload.FamilyName,
+                FullName = payload.GivenName,
                 UserName = newUserName,
                 Email = payload.Email,
                 ProfileImage = payload.Picture,
@@ -88,7 +87,6 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
 
             if (!response.IsSuccessful || response.Data == null)
                 throw new Exception("Kullanıcı insert edilirken beklenmeyen bir hata oluştu.");
-
 
             await _repository.InsertAsync(credential);
             token = tokenHelper.CreateAccessToken(credential.Id, newUserName, credential.Role);
@@ -102,7 +100,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             throw new NotImplementedException();
         }
 
-        
+
 
     }
 }

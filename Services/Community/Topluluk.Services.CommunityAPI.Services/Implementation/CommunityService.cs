@@ -89,7 +89,6 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
             {
                 return await Task.FromResult(Response<CommunityGetByIdDto>.Fail("Not found",ResponseStatus.NotFound));
             }
-            
 
             if (community.IsRestricted )
             {
@@ -100,18 +99,17 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
             {
                 return await Task.FromResult(Response<CommunityGetByIdDto>.Fail("Not Visible public", ResponseStatus.NotFound));
             }
-            
+
             var userRequest = new RestRequest(ServiceConstants.API_GATEWAY + "/user/GetUserById").AddQueryParameter("userId", community.AdminId).AddHeader("Authorization",token);
             var userResponseTask =  _client.ExecuteGetAsync<Response<UserDto>>(userRequest);
             var participiantCountTask = _participiantRepository.Count(p => !p.IsDeleted && p.CommunityId == community.Id && p.Status == ParticipiantStatus.ACCEPTED);
             var IsParticipiantTask =  _participiantRepository.AnyAsync(p => !p.IsDeleted && p.CommunityId == communityId && p.UserId == userId && p.Status == ParticipiantStatus.ACCEPTED);
-            
+
             await Task.WhenAll(userResponseTask, participiantCountTask, IsParticipiantTask);
             var user = userResponseTask.Result.Data.Data;
             _community.Id = communityId;
             _community.AdminId = user.Id;
-            _community.AdminName = user.FirstName;
-            _community.AdminLastName = user.LastName;
+            _community.AdminName = user.FullName;
             _community.AdminImage = user.ProfileImage;
             _community.AdminGender = user.Gender;
             _community.Location = community.Location ?? "";
@@ -122,7 +120,7 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
             _community.BannerImage = community.BannerImage;
             _community.ParticipiantsCount = participiantCountTask.Result;
             _community.IsParticipiant = IsParticipiantTask.Result;
-            
+
             return await Task.FromResult(Response<CommunityGetByIdDto>.Success(_community, ResponseStatus.Success));
         }
 
@@ -165,8 +163,8 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                 {
                     var content = new MultipartFormDataContent();
                     var imageContent = new ByteArrayContent(imageBytes);
-                    imageContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg"); 
-                    content.Add(imageContent, "file", communityInfo.CoverImage.FileName); 
+                    imageContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg");
+                    content.Add(imageContent, "file", communityInfo.CoverImage.FileName);
                     var imageResponse = await client.PostAsync(ServiceConstants.API_GATEWAY + "/file/upload-community-cover-image", content);
 
                     if (imageResponse.IsSuccessStatusCode)
@@ -196,8 +194,8 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                 {
                     var content = new MultipartFormDataContent();
                     var imageContent = new ByteArrayContent(imageBytes);
-                    imageContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg"); 
-                    content.Add(imageContent, "file", communityInfo.BannerImage.FileName); 
+                    imageContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg");
+                    content.Add(imageContent, "file", communityInfo.BannerImage.FileName);
                     var imageResponse = await client.PostAsync(ServiceConstants.API_GATEWAY + "/file/upload-community-banner-image", content);
 
                     if (imageResponse.IsSuccessStatusCode)
@@ -221,11 +219,11 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                 Status = ParticipiantStatus.ACCEPTED
             };
             await _participiantRepository.InsertAsync(participiant);
-         
+
             return await Task.FromResult(Response<string>.Success(response.Data, ResponseStatus.Success));
         }
 
-     
+
         public async Task<Response<string>> Delete(string ownerId,string communityId)
         {
             try
@@ -257,10 +255,10 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                 string currentId = TokenHelper.GetUserIdByToken(token);
 
                 Community? community = await _communityRepository.GetFirstAsync(c => c.Id == communityId && c.AdminId == currentId);
-                
+
                 if (community == null)
                     return Response<NoContent>.Fail("Community Not Found",ResponseStatus.NotFound);
-                
+
                 // Only admin can kick participiants.
                 if(currentId != community.AdminId)
                     return Response<NoContent>.Fail("Unaturhoized for this feature.",ResponseStatus.Unauthorized);
@@ -270,12 +268,12 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                     return Response<NoContent>.Fail("Admin can not kick yourself",ResponseStatus.BadRequest);
 
                 CommunityParticipiant? participiant = await _participiantRepository.GetFirstAsync(p => p.CommunityId == communityId && p.UserId == userId);
-                
+
                 if(participiant == null)
                     return Response<NoContent>.Fail("User Not Found",ResponseStatus.NotFound);
-                
+
                 _participiantRepository.DeleteByExpression(p => p.CommunityId == communityId && p.UserId == userId);
-                
+
                 return Response<NoContent>.Success(ResponseStatus.Success);
             }
             catch (Exception e)
@@ -298,7 +296,7 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                 Community community = await _communityRepository.GetFirstAsync(c => c.Id == dtoInfo.CommunityId);
 
                 //   Admin yapılacak kişi participiant mı ?            Isteği atan kişi admin mi ?
-                var isParticipiantTargetUser = await _participiantRepository.AnyAsync(p => p.CommunityId == community.Id && p.UserId == dtoInfo.UserId ); 
+                var isParticipiantTargetUser = await _participiantRepository.AnyAsync(p => p.CommunityId == community.Id && p.UserId == dtoInfo.UserId );
                 if (!isParticipiantTargetUser || userId != community.AdminId)
                     return await Task.FromResult(Response<string>.Fail("Failed", ResponseStatus.NotAuthenticated));
 
@@ -349,7 +347,7 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
             }
         }
 
-      
+
         public async Task<Response<string>> GetCommunityTitle(string id)
         {
             Community community = await _communityRepository.GetFirstAsync(c => c.Id == id);
@@ -359,12 +357,12 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
         public async Task<Response<List<CommunityGetPreviewDto>>> GetUserCommunities(string userId, int skip = 0, int take = 10)
         {
             var participiants =  _participiantRepository.GetListByExpressionPaginated(skip, take, c => c.UserId == userId && c.IsShownOnProfile && c.Status == ParticipiantStatus.ACCEPTED);
-            List<string> idList = participiants.Select(p => p.CommunityId).ToList(); 
+            List<string> idList = participiants.Select(p => p.CommunityId).ToList();
             var communities = await _communityRepository.GetListByExpressionAsync(c => idList.Contains(c.Id));
             List<CommunityGetPreviewDto> dtos = _mapper.Map<List<CommunityGetPreviewDto>>(communities);
             List<string> communityIds = dtos.Select(c => c.Id).ToList();
             Dictionary<string, int> communityParticipiantCounts = await _participiantRepository.GetCommunityParticipiants(communityIds);
-            
+
             foreach (var dto in dtos)
             {
                 if (communityParticipiantCounts.TryGetValue(dto.Id, out int participiantCount))
@@ -374,7 +372,7 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                 else
                 {
                     dto.ParticipiantsCount = 0; // veya başka bir değer atanabilir
-                }        
+                }
             }
             return Response<List<CommunityGetPreviewDto>>.Success(dtos, ResponseStatus.Success);
         }
@@ -407,7 +405,7 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
             }
 
         }
-        
+
         public async Task<Response<bool>> CheckIsUserAdminOwner(string userId)
         {
             try
@@ -421,7 +419,7 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                     ResponseStatus.InitialError));
             }
         }
-        
+
         private string StringToSlugConvert(string phrase)
         {
             var turkishChars = new char[] { 'ç', 'ğ', 'ı', 'i', 'ö', 'ş', 'ü' };
@@ -434,9 +432,9 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                 str = str.Replace(turkishChars[i], englishChars[i]);
             }
 
-            str = Regex.Replace(str, @"\s+", " ").Trim(); // convert multiple spaces into one space  
-            str = str.Substring(0, str.Length <= 45 ? str.Length : 45).Trim(); // cut and trim it  
-            str = Regex.Replace(str, @"\s", "-"); // hyphens  
+            str = Regex.Replace(str, @"\s+", " ").Trim(); // convert multiple spaces into one space
+            str = str.Substring(0, str.Length <= 45 ? str.Length : 45).Trim(); // cut and trim it
+            str = Regex.Replace(str, @"\s", "-"); // hyphens
 
             return str;
         }
