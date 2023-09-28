@@ -13,7 +13,6 @@ namespace Topluluk.Shared.Helper
 	public class TokenHelper
 	{
 		private readonly IConfiguration _configuration;
-
 		public TokenHelper(IConfiguration configuration)
 		{
 			_configuration = configuration;
@@ -84,7 +83,7 @@ namespace Topluluk.Shared.Helper
             return token;
         }
 
-       
+
         public static bool GetByTokenControl(HttpRequest request)
         {
             if (request != null && request.Headers != null && request.Headers["Authorization"].Count == 0)

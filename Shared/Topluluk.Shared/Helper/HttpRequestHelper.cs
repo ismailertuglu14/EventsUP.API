@@ -1,8 +1,11 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
+using X = System.Text.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
+using Topluluk.Shared.Constants;
 using Topluluk.Shared.Dtos;
 using Topluluk.Shared.Enums;
 
@@ -35,6 +38,29 @@ namespace Topluluk.Shared.Helper
 
             return responseHttp;
 		}
-	}
+        public static async Task<User?> GetUser(string token)
+        {
+            var httpClient = new HttpClient();
+            string onlyToken = token.Split(' ')[1];
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", onlyToken);
+            string userId = TokenHelper.GetUserIdByToken(token);
+            var responseHttp = await httpClient.GetAsync($"{ServiceConstants.API_GATEWAY}/user/GetUserById?userid={userId}");
+
+            if (responseHttp.IsSuccessStatusCode)
+            {
+                var responseContent = await responseHttp.Content.ReadAsStringAsync();
+                var responseObject = X.JsonSerializer.Deserialize<Response<User>>(responseContent, new X.JsonSerializerOptions()
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (responseObject != null && responseObject.StatusCode == ResponseStatus.Success)
+                {
+                    return responseObject.Data;
+                }
+            }
+            return null;
+        }
+    }
 }
 

@@ -1,4 +1,4 @@
-﻿using Topluluk.Shared.Enums;
+using Topluluk.Shared.Enums;
 
 namespace Topluluk.Services.User.Model.Dto.Follow
 {

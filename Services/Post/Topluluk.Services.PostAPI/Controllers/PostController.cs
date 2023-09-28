@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Topluluk.Services.PostAPI.Model.Dto;
-using Topluluk.Services.PostAPI.Model.Dto.Http;
 using Topluluk.Services.PostAPI.Services.Interface;
 using Topluluk.Shared.BaseModels;
 using Topluluk.Shared.Dtos;
@@ -13,22 +11,17 @@ namespace Topluluk.Services.PostAPI.Controllers
 {
     public class PostController : BaseController
     {
-        
-
         private readonly IPostService _postService;
-    
-        private readonly ITestPostService _test;
-        public PostController(IPostService postService, ITestPostService test)
+        public PostController(IPostService postService)
         {
             _postService = postService;
-            _test = test;
         }
-    
-        [HttpPost("test/create")]
-        public async Task<Response<NoContent>> CreateTestPost(int count)
-        {
-            return await _test.CreatePostsForTest(count);
-        }
+
+        //[HttpPost("test/create")]
+        //public async Task<Response<NoContent>> CreateTestPost(int count)
+        //{
+        //    return await _test.CreatePostsForTest(count);
+        //}
 
         [HttpGet("feed")]
         public async Task<Response<List<GetPostForFeedDto>>> GetPostsForFeedScreen(int take = 10, int skip = 0)
@@ -56,7 +49,7 @@ namespace Topluluk.Services.PostAPI.Controllers
         public async Task<Response<string>> Create( [FromForm] CreatePostDto postDto)
         {
             postDto.UserId = UserId;
-            return await _postService.Create(this.UserId, postDto);
+            return await _postService.Create(this.Token, this.UserId, postDto);
         }
 
         [HttpPost("Delete")]
@@ -66,42 +59,35 @@ namespace Topluluk.Services.PostAPI.Controllers
             return await _postService.Delete(postDto);
         }
 
-
-     
-
-      
-
+        /// <summary>
+        /// Get user's saved posts.
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("saved-posts")]
         public async Task<Response<List<GetPostForFeedDto>>> GetSavedPosts()
         {
             return await _postService.GetSavedPosts(this.UserId);
         }
+
+        /// <summary>
+        /// Save post to user's saved posts.
+        /// </summary>
+        /// <param name="postId"></param>
+        /// <returns></returns>
         [HttpPost("save/{postId}")]
         public async Task<Response<string>> SavePost(string postId)
         {
-            return await _postService.SavePost(this.UserId, postId);
+            return await _postService.SavePost(this.Token,this.UserId, postId);
         }
-        [HttpGet("interactions/{postId}")]
-        public async Task<Response<List<UserInfoDto>>> GetInteractions(string postId,int type, int take, int skip)
-        {
-            return await _postService.GetInteractions(this.UserId,postId,type, take,skip);
-        }
-        [HttpPost("interaction/{postId}")]
-        public async Task<Response<string>> Interaction(string postId,PostInteractionCreateDto createDto)
-        {
-            return await _postService.Interaction(this.UserId,postId, createDto);
-        }
-        [HttpPost("remove-interaction/{postId}")]
-        public async Task<Response<string>> RemoveInteraction(string postId)
-        {
-            return await _postService.RemoveInteraction(this.UserId, postId);
-        }
-
 
         // Http Calls
 
+        /// <summary>
+        /// This function triggers when user deletes his/her account.
+        /// </summary>
+        /// <returns></returns>
         [HttpPost("delete-posts")]
-        public async Task<Response<bool>> DeletePosts()
+        public async Task<Response<bool>> DeleteUserPosts()
         {
             return await _postService.DeletePosts(this.UserId);
         }

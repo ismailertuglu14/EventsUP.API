@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Topluluk.Services.User.Model.Dto;
 using Topluluk.Services.User.Services.Interface;
@@ -6,19 +7,18 @@ using Topluluk.Shared.Dtos;
 
 namespace Topluluk.Services.User.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("User")]
 public class ImageController:BaseController
 {
-
     private IImageService _imageService;
-
     public ImageController(IImageService imageService)
     {
         _imageService = imageService;
     }
-    
-    [HttpPost("[action]")]
+
+    [HttpPost("ChangeProfileImage")]
     public async Task<Response<string>> ChangeProfileImage(IFormFileCollection files, CancellationToken cancellationToken)
     {
         return await _imageService.ChangeProfileImage(UserName, files,cancellationToken);
@@ -34,7 +34,7 @@ public class ImageController:BaseController
     {
         return await _imageService.DeleteBannerImage(this.UserId);
     }
-    [HttpPost("[action]")]
+    [HttpPost("ChangeBannerImage")]
     public async Task<Response<string>> ChangeBannerImage([FromForm] UserChangeBannerDto changeBannerDto)
     {
         return await _imageService.ChangeBannerImage(this.UserId, changeBannerDto);

@@ -10,15 +10,11 @@ namespace Topluluk.Services.FileAPI.Services.Implementation
 {
 	public class AzureStorage : Storage, IAzureStorage
     {
-
         private readonly BlobServiceClient _blobServiceClient;
-        
-        
         public AzureStorage(IConfiguration configuration)
 		{
             _blobServiceClient = new BlobServiceClient(connectionString: configuration["Storage:Azure"] ?? throw new ArgumentNullException());
         }
-
         public async Task<List<string>> UploadAsync(string containerName, IFormFileCollection formFileCollection)
         {
             BlobContainerClient _blobContainerClient = _blobServiceClient.GetBlobContainerClient(containerName);
@@ -68,11 +64,9 @@ namespace Topluluk.Services.FileAPI.Services.Implementation
             BlobContainerClient _blobContainerClient = _blobServiceClient.GetBlobContainerClient(containerName);
             await _blobContainerClient.CreateIfNotExistsAsync();
             await _blobContainerClient.SetAccessPolicyAsync(PublicAccessType.BlobContainer);
-
             string fileNewName = await FileRenameAsync(containerName, file.FileName, HasFile);
             BlobClient blobClient = _blobContainerClient.GetBlobClient(fileNewName);
             await blobClient.UploadAsync(file.OpenReadStream());
-                  
             return await Task.FromResult(Response<string>.Success(blobClient.Uri.AbsoluteUri,ResponseStatus.Success));
         }
     }

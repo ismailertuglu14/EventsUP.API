@@ -30,11 +30,11 @@ namespace DBHelper.Repository.Mongo
             var collectionName = typeof(T).Name + "Collection";
             return database.GetCollection<T>(collectionName);
         }
-        
+
         //todo: Need performence improvements
         public DatabaseResponse BulkUpdate(List<T> entityList)
         {
-            
+
             foreach (T entity in entityList)
             {
                 var data = _collection.ReplaceOne(x => x.Id == entity.Id, entity);
@@ -76,7 +76,7 @@ namespace DBHelper.Repository.Mongo
 
         public int Delete(string[] id)
         {
-          
+
             var filter = Builders<T>.Filter.In("_id", id);
             var update = Builders<T>.Update.Set(x => x.IsDeleted, true);
             var result = _collection.UpdateMany(filter, update);
@@ -114,7 +114,7 @@ namespace DBHelper.Repository.Mongo
             response.IsSuccess = true;
             response.Data = deleteResponse.ToString();
             return response;
-            
+
         }
 
         // Find by id and update IsDeleted to true
@@ -207,7 +207,7 @@ namespace DBHelper.Repository.Mongo
             return entity;
         }
 
-        
+
 
         public DatabaseResponse GetById(string id)
         {
@@ -253,7 +253,7 @@ namespace DBHelper.Repository.Mongo
         {
             var defaultFilter = Builders<T>.Filter.Eq(x => x.IsDeleted, false);
             var finalFilter = Builders<T>.Filter.And(defaultFilter, predicate);
-            
+
             return _collection.Find(finalFilter).FirstOrDefault();
         }
 
@@ -261,7 +261,7 @@ namespace DBHelper.Repository.Mongo
         {
             var defaultFilter = Builders<T>.Filter.Eq(x => x.IsDeleted, false);
             var finalFilter = Builders<T>.Filter.And(defaultFilter, predicate);
-            
+
             return await _collection.Find(finalFilter).FirstOrDefaultAsync();
         }
 
@@ -272,7 +272,7 @@ namespace DBHelper.Repository.Mongo
 
         public async Task<T> GetFirstWithDeletedAsync(Expression<Func<T, bool>>? predicate = null)
         {
-          
+
             return await _collection.Find(predicate).FirstOrDefaultAsync();
 
         }
@@ -306,12 +306,12 @@ namespace DBHelper.Repository.Mongo
         {
             var defaultFilter = Builders<T>.Filter.Eq(x => x.IsDeleted, false);
             var finalFilter = Builders<T>.Filter.And(defaultFilter, predicate);
-            
+
 
             var data = _collection.Find(finalFilter).Skip(skip * take).Limit(take).ToList();
 
             return data;
-            
+
         }
 
         public List<T>  GetListByExpressionWithDeleted(Expression<Func<T, bool>>? predicate = null)
@@ -376,9 +376,9 @@ namespace DBHelper.Repository.Mongo
         public async Task<DatabaseResponse> GetListByIdAsync(List<string> ids)
         {
             DatabaseResponse response = new();
-         
+
             var filter = Builders<T>.Filter.In(x => x.Id, ids);
-         
+
             response.Data = await _collection.Find(filter).ToListAsync();
 
             response.IsSuccess = true;

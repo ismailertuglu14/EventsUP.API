@@ -1,4 +1,4 @@
-﻿using DBHelper.Connection;
+using DBHelper.Connection;
 using DBHelper.Repository.Mongo;
 using MongoDB.Driver;
 using Topluluk.Services.User.Data.Interface;

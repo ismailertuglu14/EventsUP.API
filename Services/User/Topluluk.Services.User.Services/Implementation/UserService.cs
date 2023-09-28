@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using DBHelper.Repository;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
