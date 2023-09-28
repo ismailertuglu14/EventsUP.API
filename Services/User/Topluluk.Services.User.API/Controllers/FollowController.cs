@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Topluluk.Services.User.Model.Dto;
+using Topluluk.Services.User.Model.Dto.Follow;
 using Topluluk.Services.User.Services.Interface;
 using Topluluk.Shared.BaseModels;
 using Topluluk.Shared.Dtos;
