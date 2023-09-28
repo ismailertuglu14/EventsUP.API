@@ -5,5 +5,4 @@ namespace Topluluk.Services.User.Data.Interface;
 
 public interface IUserFollowRequestRepository : IGenericRepository<FollowRequest>
 {
-    
 }

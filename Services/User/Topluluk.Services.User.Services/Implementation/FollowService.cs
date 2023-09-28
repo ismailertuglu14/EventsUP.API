@@ -262,43 +262,9 @@ public class FollowService : IFollowService
         }
     }
 
-    public async Task<Response<List<FollowerUserDto>>> GetFollowerUsers(string id, string userId, int skip = 0, int take = 10)
-    {
-        try
-        {
-            if (id.IsNullOrEmpty() || userId.IsNullOrEmpty())
-            {
-                return await Task.FromResult(Response<List<FollowerUserDto>>.Fail("", ResponseStatus.BadRequest));
-            }
-
-            _User? user = await _userRepository.GetFirstAsync(u => u.Id == userId);
-
-            if (user == null)
-            {
-                return await Task.FromResult(Response<List<FollowerUserDto>>.Fail($"User Not Found!", ResponseStatus.NotFound));
-            }
-
-            List<UserFollow> followers = _followRepository.GetListByExpressionPaginated(skip, take, f => f.TargetId == userId);
-
-            List<_User> users = _userRepository.GetListByExpressionPaginated(skip, take, u => followers.Any(f => f.SourceId == u.Id));
-            List<FollowerUserDto> followersDto = _mapper.Map<List<_User>, List<FollowerUserDto>>(users);
-
-            return await Task.FromResult(Response<List<FollowerUserDto>>.Success(followersDto, ResponseStatus.Success));
-
-        }
-        catch (Exception e)
-        {
-            return await Task.FromResult(Response<List<FollowerUserDto>>.Fail($"Some error occurred: {e}", ResponseStatus.InitialError));
-
-        }
-    }
-<<<<<<< Updated upstream
-=======
-    }
 
     public async Task<Response<List<FollowerUserDto>>> GetFollowerUsers(string currentUserId, string userId, int skip = 0, int take = 10)
     {
-
         _User? user = await _userRepository.GetFirstAsync(u => u.Id == userId);
 
         if (user == null)
@@ -358,5 +324,4 @@ public class FollowService : IFollowService
             _mapper.Map<List<_User>, List<FollowerUserDto>>(followersDto);
         return Response<List<FollowerUserDto>?>.Success(followingUserDtos, ResponseStatus.Success);
     }
->>>>>>> Stashed changes
 }

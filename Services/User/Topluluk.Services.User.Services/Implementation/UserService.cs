@@ -501,7 +501,7 @@ namespace Topluluk.Services.User.Services.Implementation
                 }
                 var followingUsers =
                     _userRepository.GetListByExpressionPaginated(skip, take, u => userIds.Contains(u.Id)
-                        && ((u.FirstName.ToLower() + " " + u.LastName.ToLower()).Contains(text.ToLower()) || u.UserName.Contains(text.ToLower())) );
+                        && (u.FullName.ToLower().Contains(text.ToLower()) || u.UserName.Contains(text.ToLower())));
                 List<FollowingUserDto> followingUserDtos =
                     _mapper.Map<List<_User>, List<FollowingUserDto>>(followingUsers);
                 /*DatabaseResponse response = await _userRepository.GetAllAsync(take, skip, u =>  true
