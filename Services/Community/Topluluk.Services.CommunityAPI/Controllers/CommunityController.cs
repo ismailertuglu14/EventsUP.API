@@ -49,7 +49,7 @@ namespace Topluluk.Services.CommunityAPI.Controllers
         }
 
 
-        
+
         [HttpPost("delete-permanently/{id}")]
         public async Task<Response<string>> DeletePermanently(string id)
         {
@@ -63,8 +63,7 @@ namespace Topluluk.Services.CommunityAPI.Controllers
         {
             return await _communityService.AssignUserAsAdmin(this.UserId, dtoInfo);
         }
-        
-        [HttpPost("assign-user-as-moderator")]
+                [HttpPost("assign-user-as-moderator")]
         public async Task<Response<string>> AssignUserAsModerator(AssignUserAsModeratorDto dtoInfo)
         {
             dtoInfo.AssignedById = UserId;
@@ -76,8 +75,6 @@ namespace Topluluk.Services.CommunityAPI.Controllers
         {
             return await _communityService.KickUser(this.Token, communityId, userId);
         }
-        
-     
 
         /// <summary>
         /// Returns information of the communities the user has joined.
@@ -91,7 +88,7 @@ namespace Topluluk.Services.CommunityAPI.Controllers
         {
             return await _communityService.GetUserCommunities(id,skip,take);
         }
-        
+
         /// <summary>
         /// Returns count of the communities the user has joined.
         /// </summary>
@@ -102,7 +99,7 @@ namespace Topluluk.Services.CommunityAPI.Controllers
         {
             return await _communityService.GetUserParticipiantCommunitiesCount(id);
         }
-    
+
 
 
         [HttpGet("getCommunityTitle")]

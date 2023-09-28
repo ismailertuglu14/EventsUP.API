@@ -106,8 +106,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             var content = new UserInsertDto
             {
                 Id = response.Data,
-                FirstName = userDto.FirstName,
-                LastName = userDto.LastName,
+                FullName = userDto.FullName,
                 UserName = userDto.UserName,
                 Email = userDto.Email,
                 BirthdayDate = DateTime.Now,

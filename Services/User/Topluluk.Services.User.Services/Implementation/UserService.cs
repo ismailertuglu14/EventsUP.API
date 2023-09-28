@@ -35,10 +35,9 @@ namespace Topluluk.Services.User.Services.Implementation
             _followRequestRepository = followRequestRepository;
             _client = new RestClient();
         }
-
         public async Task<Response<GetUserByIdDto>> GetUserById(string id, string userId)
         {
-           _User? user = new();
+            _User? user = new();
 
             if (_redisRepository.IsConnected)
             {
@@ -111,13 +110,6 @@ namespace Topluluk.Services.User.Services.Implementation
 
         }
 
-        public async Task<Response<string>> InsertUser(UserInsertDto userInfo)
-        {
-            _User user = _mapper.Map<_User>(userInfo);
-            DatabaseResponse response = await _userRepository.InsertAsync(user);
-
-            return await Task.FromResult(Response<string>.Success(response.Data, ResponseStatus.Success));
-        }
 
         public async Task<Response<string>> DeleteUserById(string id, string token, UserDeleteDto dto)
         {
@@ -149,8 +141,8 @@ namespace Topluluk.Services.User.Services.Implementation
                 else
                 {
 
-                    _followRepository.DeleteByExpression(f=>f.SourceId == id || f.TargetId == id);
-                    _followRequestRepository.DeleteByExpression(f=>f.SourceId == id || f.TargetId == id);
+                    _followRepository.DeleteByExpression(f => f.SourceId == id || f.TargetId == id);
+                    _followRequestRepository.DeleteByExpression(f => f.SourceId == id || f.TargetId == id);
 
                     // Posts and PostComments will be deleted.
                     var deletePostsRequest = new RestRequest(ServiceConstants.API_GATEWAY + "/post/delete-posts").AddHeader("Authorization", token);
@@ -240,8 +232,7 @@ namespace Topluluk.Services.User.Services.Implementation
             if (text == null)
                 return await Task.FromResult(Response<List<UserSearchResponseDto>>.Success(null, ResponseStatus.Success));
 
-            DatabaseResponse response = await _userRepository.GetAllAsync(take, skip, u => u.Id != userId && ((u.FirstName.ToLower() + " " +
-                                                                                     u.LastName.ToLower()).Contains(text.ToLower()) ||
+            DatabaseResponse response = await _userRepository.GetAllAsync(take, skip, u => u.Id != userId && ((u.FullName.ToLower()).Contains(text.ToLower()) ||
                                                                                      u.UserName.ToLower().Contains(text.ToLower()))
                                                                                      );
 
@@ -268,8 +259,8 @@ namespace Topluluk.Services.User.Services.Implementation
 
                 GetUserAfterLoginDto dto = new();
                 dto = _mapper.Map<GetUserAfterLoginDto>(user);
-                var followinCountTask =  _followRepository.Count(u => !u.IsDeleted && u.SourceId == id);
-                var followersCountTask =  _followRepository.Count(u => !u.IsDeleted && u.TargetId == id);
+                var followinCountTask = _followRepository.Count(u => !u.IsDeleted && u.SourceId == id);
+                var followersCountTask = _followRepository.Count(u => !u.IsDeleted && u.TargetId == id);
                 await Task.WhenAll(followersCountTask, followersCountTask);
 
                 dto.FollowingsCount = followinCountTask.Result;
@@ -277,7 +268,7 @@ namespace Topluluk.Services.User.Services.Implementation
 
                 return await Task.FromResult(Response<GetUserAfterLoginDto>.Success(dto, ResponseStatus.Success));
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return await Task.FromResult(Response<GetUserAfterLoginDto>.Fail($"Some error occurred: {e}", ResponseStatus.InitialError));
             }
@@ -320,7 +311,7 @@ namespace Topluluk.Services.User.Services.Implementation
                 if (followDocuments != null && followDocuments.Count > 0)
                 {
                     await _followRepository.InsertManyAsync(followDocuments);
-                    _followRequestRepository.DeleteByExpression(x => followRequests.Select(f =>f.TargetId).ToList().Contains(x.TargetId));
+                    _followRequestRepository.DeleteByExpression(x => followRequests.Select(f => f.TargetId).ToList().Contains(x.TargetId));
                 }
 
 
@@ -336,106 +327,90 @@ namespace Topluluk.Services.User.Services.Implementation
             }
         }
 
-      public async Task<Response<NoContent>> UpdateProfile(string userId, string token, UserUpdateProfileDto userDto)
+        public async Task<Response<NoContent>> UpdateProfile(string userId, string token, UserUpdateProfileDto userDto)
         {
-
-            try
+            if (userId.IsNullOrEmpty())
             {
-                if (userId.IsNullOrEmpty())
-                {
-                    return await Task.FromResult(Response<NoContent>.Fail("", ResponseStatus.Unauthorized));
-                }
-
-
-                _User? user = await _userRepository.GetFirstAsync(u => u.Id == userId);
-
-                if (user == null)
-                {
-                    return await Task.FromResult(Response<NoContent>.Fail("User not found", ResponseStatus.NotFound));
-                }
-
-                if (user.UserName != userDto.UserName)
-                {
-                    var result = await _userRepository.CheckIsUsernameUnique(userDto.UserName);
-                    if (result == true)
-                    {
-                        return await Task.FromResult(Response<NoContent>.Fail("UserName already taken!", ResponseStatus.UsernameInUse));
-                    }
-                }
-
-                if (user.Email != userDto.Email)
-                {
-                    var result = await _userRepository.CheckIsUsernameUnique(userDto.Email);
-                    if (result == true)
-                    {
-                        return Response<NoContent>.Fail("Email already taken!", ResponseStatus.EmailInUse);
-                    }
-                }
-                // Http request to auth service for change username and email
-
-                UserCredentialUpdateDto credentialDto = new();
-                credentialDto.UserName = userDto.UserName;
-                credentialDto.Email = userDto.Email;
-
-                var _request = new RestRequest(ServiceConstants.API_GATEWAY + "/authentication/update-profile").AddHeader("Authorization", token).AddBody(credentialDto);
-                await _client.ExecutePostAsync<Response<NoContent>>(_request);
-
-                user.FirstName = userDto.FirstName.IsNullOrEmpty() ? user.FirstName : userDto.FirstName;
-                user.LastName = userDto.LastName.IsNullOrEmpty() ?  user.LastName : userDto.LastName;
-                user.UserName =  userDto.UserName.IsNullOrEmpty() ? user.UserName : userDto.UserName;
-                user.Email = userDto.Email.IsNullOrEmpty() ? user.Email : userDto.Email;
-                user.Gender = userDto.Gender;
-                user.Bio = userDto.Bio.IsNullOrEmpty() ? user.Bio : userDto.Bio;
-                user.BirthdayDate = userDto.BirthdayDate;
-                user.Title = userDto.Title.IsNullOrEmpty() ? user.Title : userDto.Title;
-                DatabaseResponse response = _userRepository.Update(user);
-
-                if (response.IsSuccess)
-                {
-                    return Response<NoContent>.Success( ResponseStatus.Success);
-                }
-
-
-                return Response<NoContent>.Fail("Update failed", ResponseStatus.InitialError);
+                return await Task.FromResult(Response<NoContent>.Fail("", ResponseStatus.Unauthorized));
             }
-            catch (Exception e)
+
+
+            _User? user = await _userRepository.GetFirstAsync(u => u.Id == userId);
+
+            if (user == null)
             {
-                return Response<NoContent>.Fail(e.ToString(), ResponseStatus.InitialError);
+                return await Task.FromResult(Response<NoContent>.Fail("User not found", ResponseStatus.NotFound));
             }
+
+            if (user.UserName != userDto.UserName)
+            {
+                var result = await _userRepository.CheckIsUsernameUnique(userDto.UserName);
+                if (result == true)
+                {
+                    return await Task.FromResult(Response<NoContent>.Fail("UserName already taken!", ResponseStatus.UsernameInUse));
+                }
+            }
+
+            if (user.Email != userDto.Email)
+            {
+                var result = await _userRepository.CheckIsUsernameUnique(userDto.Email);
+                if (result == true)
+                {
+                    return Response<NoContent>.Fail("Email already taken!", ResponseStatus.EmailInUse);
+                }
+            }
+            // Http request to auth service for change username and email
+            UserCredentialUpdateDto credentialDto = new();
+            credentialDto.UserName = userDto.UserName;
+            credentialDto.Email = userDto.Email;
+
+            var _request = new RestRequest(ServiceConstants.API_GATEWAY + "/authentication/update-profile").AddHeader("Authorization", token).AddBody(credentialDto);
+            await _client.ExecutePostAsync<Response<NoContent>>(_request);
+
+            user.FullName = userDto.FullName.IsNullOrEmpty() ? user.FullName : userDto.FullName;
+            user.UserName = userDto.UserName.IsNullOrEmpty() ? user.UserName : userDto.UserName;
+            user.Email = userDto.Email.IsNullOrEmpty() ? user.Email : userDto.Email;
+            user.Gender = userDto.Gender;
+            user.Bio = userDto.Bio.IsNullOrEmpty() ? user.Bio : userDto.Bio;
+            user.BirthdayDate = userDto.BirthdayDate;
+            user.Title = userDto.Title.IsNullOrEmpty() ? user.Title : userDto.Title;
+            DatabaseResponse response = _userRepository.Update(user);
+
+            if (response.IsSuccess)
+            {
+                return Response<NoContent>.Success(ResponseStatus.Success);
+            }
+            return Response<NoContent>.Fail("Update failed", ResponseStatus.InitialError);
         }
 
 
 
         //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ For Http calls coming from other services @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\
 
+        public async Task<Response<string>> InsertUser(UserInsertDto userInfo)
+        {
+            _User user = _mapper.Map<_User>(userInfo);
+            DatabaseResponse response = await _userRepository.InsertAsync(user);
+            return await Task.FromResult(Response<string>.Success(response.Data, ResponseStatus.Success));
+        }
 
         public async Task<Response<UserInfoForPostDto>> GetUserInfoForPost(string id, string sourceUserId)
         {
-            try
+            UserInfoForPostDto dto = new();
+            _User user = new();
+            if (_redisRepository.IsConnected)
             {
-                UserInfoForPostDto dto = new();
-                _User user = new();
-                if (_redisRepository.IsConnected)
-                {
-                    user = await _redisRepository.GetOrNullAsync<_User>($"user_{id}")
-                                 ?? await _userRepository.GetFirstAsync(u => u.Id == id);
-                }
-                else
-                {
-                    user = await _userRepository.GetFirstAsync(u => u.Id == id);
-                }
-
-                dto = _mapper.Map<UserInfoForPostDto>(user);
-                dto.UserId = user.Id;
-                dto.IsUserFollowing = await _followRepository.AnyAsync(f => f.SourceId == sourceUserId && f.TargetId == id);
-                return await Task.FromResult(Response<UserInfoForPostDto>.Success(dto, ResponseStatus.Success));
-
+                user = await _redisRepository.GetOrNullAsync<_User>($"user_{id}")
+                             ?? await _userRepository.GetFirstAsync(u => u.Id == id);
             }
-            catch (Exception e)
+            else
             {
-                return await Task.FromResult(Response<UserInfoForPostDto>.Fail($"Error occured {e}", ResponseStatus.InitialError));
-
+                user = await _userRepository.GetFirstAsync(u => u.Id == id);
             }
+            dto = _mapper.Map<UserInfoForPostDto>(user);
+            dto.UserId = user.Id;
+            dto.IsUserFollowing = await _followRepository.AnyAsync(f => f.SourceId == sourceUserId && f.TargetId == id);
+            return await Task.FromResult(Response<UserInfoForPostDto>.Success(dto, ResponseStatus.Success));
         }
 
         public async Task<Response<GetCommunityOwnerDto>> GetCommunityOwner(string id)
@@ -446,7 +421,7 @@ namespace Topluluk.Services.User.Services.Implementation
             {
                 GetCommunityOwnerDto dto = new();
                 dto.OwnerId = user.Id;
-                dto.Name = user.FirstName + ' ' + user.LastName;
+                dto.Name = user.FullName;
                 dto.ProfileImage = user.ProfileImage;
                 return await Task.FromResult(Response<GetCommunityOwnerDto>.Success(dto, ResponseStatus.Success));
             }
