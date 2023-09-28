@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using RestSharp;
 using Topluluk.Services.User.Data.Interface;
 using Topluluk.Services.User.Model.Dto;
+using Topluluk.Services.User.Model.Dto.Follow;
 using Topluluk.Services.User.Model.Entity;
 using Topluluk.Services.User.Services.Interface;
 using Topluluk.Shared.Dtos;
@@ -290,7 +291,7 @@ public class FollowService : IFollowService
             return Response<List<FollowingUserDto>?>.Fail("User not found", ResponseStatus.NotFound);
         }
         var followingIds = await _followRepository.GetFollowingIds(skip, take, f => f.SourceId == userId);
-        if(followingIds is null || followingIds.Count == 0)
+        if (followingIds is null || followingIds.Count == 0)
         {
             return Response<List<FollowingUserDto>?>.Success(new(), ResponseStatus.Success);
         }
@@ -313,7 +314,7 @@ public class FollowService : IFollowService
             return Response<List<FollowerUserDto>?>.Fail("User not found", ResponseStatus.NotFound);
         }
         var followersIds = await _followRepository.GetFollowerIds(skip, take, f => f.TargetId == userId);
-        if (followersIds is null || followersIds.Count == 0 )
+        if (followersIds is null || followersIds.Count == 0)
         {
             return Response<List<FollowerUserDto>?>.Success(new(), ResponseStatus.Success);
         }

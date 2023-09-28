@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using RestSharp;
 using Topluluk.Services.User.Data.Interface;
 using Topluluk.Services.User.Model.Dto;
+using Topluluk.Services.User.Model.Dto.Follow;
 using Topluluk.Services.User.Model.Dto.Http;
 using Topluluk.Services.User.Model.Entity;
 using Topluluk.Services.User.Services.Interface;
@@ -313,6 +314,10 @@ namespace Topluluk.Services.User.Services.Implementation
                     await _followRepository.InsertManyAsync(followDocuments);
                     _followRequestRepository.DeleteByExpression(x => followRequests.Select(f => f.TargetId).ToList().Contains(x.TargetId));
                 }
+
+
+
+
                 return await Task.FromResult(Response<string>.Success($"Privacy status Successfully updated to {user.IsPrivate}", ResponseStatus.Success));
 
             }
@@ -515,4 +520,3 @@ namespace Topluluk.Services.User.Services.Implementation
     }
 
 }
-
