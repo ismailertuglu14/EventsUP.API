@@ -9,21 +9,13 @@ namespace Topluluk.Services.AuthenticationAPI.Model.Validators
 		public CreateUserValidator()
 		{
 
-            RuleFor(u => u.FirstName)
+            RuleFor(u => u.FullName)
                 .NotEmpty()
                 .NotNull()
-                    .WithMessage("First Name must be required")
+                    .WithMessage("Name must be required")
                 .MinimumLength(3)
                 .MaximumLength(64)
-                    .WithMessage("First Name must be between length min 3 and max 64 length");
-
-            RuleFor(u => u.LastName)
-                .NotEmpty()
-                .NotNull()
-                    .WithMessage("Last Name must be required")
-                .MinimumLength(3)
-                .MaximumLength(64)
-                    .WithMessage("Last Name must be between length min 3 and max 64 length");
+                    .WithMessage("Name must be between length min 3 and max 64 length");
 
             RuleFor(u => u.UserName)
                 .NotEmpty()
@@ -41,7 +33,7 @@ namespace Topluluk.Services.AuthenticationAPI.Model.Validators
                 .MaximumLength(64)
                     .WithMessage("Password must be between length min 6 and max 64 length");
 
-         
+
             RuleFor(u => u.Email)
                 .NotEmpty()
                 .NotNull()

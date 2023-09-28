@@ -1,19 +1,13 @@
 ﻿using System;
-using Topluluk.Services.PostAPI.Model.Entity;
-using Topluluk.Shared.Enums;
+using Topluluk.Shared.Dtos;
 
 namespace Topluluk.Services.PostAPI.Model.Dto
 {
 	public class CommentGetDto
 	{
 		public string Id { get; set; }
-		public string UserId { get; set; }
-		public string FirstName { get; set; }
-		public string LastName { get; set; }
-		public string? ProfileImage { get; set; }
-		public GenderEnum Gender { get; set; }
-
-		public string Message { get; set; }
+        public User User { get; set; }
+        public string Message { get; set; }
 
 		public DateTime CreatedAt { get; set; }
 
@@ -22,10 +16,6 @@ namespace Topluluk.Services.PostAPI.Model.Dto
 		public int ReplyCount { get; set; }
 		public CommentInteracted IsInteracted { get; set; }
 		public CommentLikes InteractionCounts { get; set; }
-		public CommentGetDto()
-		{
-			
-		}
 	}
 
 	public class CommentInteracted

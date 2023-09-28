@@ -35,14 +35,14 @@ public class ImageService : IImageService
             return Response<string>.Fail("Atleast Need 1 image",
                 ResponseStatus.BadRequest);
         }
-                
+
         _User user = await _userRepository.GetFirstAsync(u => u.Id == userId);
-                
+
         if (user == null)
         {
             return Response<string>.Fail("User Not Found", ResponseStatus.NotFound);
         }
-                
+
         Response<string>? responseData = new();
         byte[] imageBytes;
 
@@ -56,8 +56,8 @@ public class ImageService : IImageService
         {
             var content = new MultipartFormDataContent();
             var imageContent = new ByteArrayContent(imageBytes);
-            imageContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg"); 
-            content.Add(imageContent, "File", changeBannerDto.File.FileName); 
+            imageContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg");
+            content.Add(imageContent, "File", changeBannerDto.File.FileName);
 
             if (user.BannerImage != null)
             {
@@ -79,7 +79,7 @@ public class ImageService : IImageService
 
             user.BannerImage = responseData!.Data;
             bool updateSuccess = _userRepository.Update(user).IsSuccess;
-                        
+
 
             if (updateSuccess && _redisRepository.IsConnected)
             {
@@ -87,7 +87,7 @@ public class ImageService : IImageService
             }
 
             return Response<string>.Success($"Image changed with {user.BannerImage}", ResponseStatus.Success);
-        }    
+        }
     }
 
     public async Task<Response<NoContent>> DeleteBannerImage(string userId)
@@ -98,14 +98,14 @@ public class ImageService : IImageService
 
         if (user.BannerImage == null)
             return Response<NoContent>.Success(ResponseStatus.Success);
-            
+
         NameObject nameObject = new() { Name = user.BannerImage};
         var request = new RestRequest(ServiceConstants.API_GATEWAY + "/file/delete-user-banner").AddBody(nameObject);
         var response = await _client.ExecutePostAsync<Response<string>>(request);
 
         if (!response.IsSuccessful || !response.Data!.IsSuccess)
             return Response<NoContent>.Fail("Failed", ResponseStatus.Failed);
-                
+
         user.BannerImage = null;
         _userRepository.Update(user);
         await _redisRepository.SetValueAsync($"user_{user.Id}",user);
@@ -120,7 +120,7 @@ public class ImageService : IImageService
             return Response<string>.Fail("Atleast Need 1 image",
                 ResponseStatus.BadRequest);
         }
-                
+
         _User user = await _userRepository.GetFirstAsync(u => u.UserName == userName);
         Response<List<string>>? responseData = new();
         byte[] imageBytes;
@@ -137,9 +137,6 @@ public class ImageService : IImageService
             var imageContent = new ByteArrayContent(imageBytes);
             imageContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg"); // Resim formatına uygun mediatype belirleme
             content.Add(imageContent, "files", files[0].FileName); // "files": paramtere adı "files[0].FileName": Resimin adı
-
-              
-              
             if (user.ProfileImage != null)
             {
                 NameObject nameObject = new() { Name = user.ProfileImage};
@@ -167,7 +164,7 @@ public class ImageService : IImageService
             await _redisRepository.SetValueAsync($"user_{user.Id}",user);
             return Response<string>.Success($"Image changed with {imageUrl}",
                 ResponseStatus.Success);
-        }   
+        }
     }
 
     public async Task<Response<NoContent>> DeleteProfileImage(string userId)
@@ -184,7 +181,7 @@ public class ImageService : IImageService
 
         if (!response.IsSuccessful || !response.Data!.IsSuccess)
             return Response<NoContent>.Fail("Failed", ResponseStatus.Failed);
-                
+
         user.ProfileImage = null;
         _userRepository.Update(user);
         await _redisRepository.SetValueAsync($"user_{user.Id}",user);

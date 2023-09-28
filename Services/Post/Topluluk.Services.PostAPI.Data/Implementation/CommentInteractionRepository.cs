@@ -11,7 +11,7 @@ public class CommentInteractionRepository : MongoGenericRepository<CommentIntera
 {
     private readonly IConnectionFactory _connectionFactory;
 
-  
+
     public CommentInteractionRepository(IConnectionFactory connectionFactory) : base(connectionFactory)
     {
 
@@ -19,8 +19,8 @@ public class CommentInteractionRepository : MongoGenericRepository<CommentIntera
     }
     private string GetCollectionName() => $"{nameof(CommentInteraction)}Collection";
     private IMongoDatabase GetConnection() => (MongoDB.Driver.IMongoDatabase)_connectionFactory.GetConnection;
-    
-    
+
+
     public async Task<Dictionary<string, CommentLikes>> GetCommentsInteractionCounts(List<string> commentIds)
     {
         var database = GetConnection();
@@ -34,12 +34,12 @@ public class CommentInteractionRepository : MongoGenericRepository<CommentIntera
         var projection = Builders<CommentInteraction>.Projection
             .Include(c => c.CommentId)
             .Include(c => c.Type);
-        
+
         var interactions = await database.GetCollection<CommentInteraction>(collectionName)
             .Find(filter)
             .Project<CommentInteraction>(projection)
             .ToListAsync();
-        
+
         foreach (var interaction in interactions)
         {
             if (!commentsInteractionCounts.ContainsKey(interaction.CommentId))
@@ -65,12 +65,12 @@ public class CommentInteractionRepository : MongoGenericRepository<CommentIntera
         var filter = Builders<CommentInteraction>.Filter.And(
             Builders<CommentInteraction>.Filter.Eq(c => c.IsDeleted, false),
             Builders<CommentInteraction>.Filter.In(c => c.CommentId, commentIds),
-            Builders<CommentInteraction>.Filter.Eq(c => c.UserId, userId)
+            Builders<CommentInteraction>.Filter.Eq(c => c.User.Id, userId)
         );
 
         var projection = Builders<CommentInteraction>.Projection
             .Include(c => c.CommentId)
-            .Include(c =>c.UserId)
+            .Include(c => c.User.Id)
             .Include(c => c.Type);
 
         var interactionsCursor = await database.GetCollection<CommentInteraction>(collectionName)
@@ -90,10 +90,10 @@ public class CommentInteractionRepository : MongoGenericRepository<CommentIntera
                 if (!commentsInteracted.ContainsKey(commentId))
                 {
                     var isLiked = interactions.Any(x =>
-                        x.CommentId == commentId && x.UserId == userId && x.Type == CommentInteractionType.LIKE);
+                        x.CommentId == commentId && x.User.Id == userId && x.Type == CommentInteractionType.LIKE);
 
                     var isDisliked = interactions.Any(x =>
-                        x.CommentId == commentId && x.UserId == userId && x.Type == CommentInteractionType.DISLIKE);
+                        x.CommentId == commentId && x.User.Id == userId && x.Type == CommentInteractionType.DISLIKE);
 
                     commentsInteracted.Add(commentId, new CommentInteracted
                     {
@@ -106,5 +106,5 @@ public class CommentInteractionRepository : MongoGenericRepository<CommentIntera
 
         return commentsInteracted;
     }
-    
+
 }

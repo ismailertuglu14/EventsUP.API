@@ -24,7 +24,7 @@ public class SavedPostRepository : MongoGenericRepository<SavedPost>, ISavedPost
             var collectionName = GetCollectionName();
 
             var filter = Builders<SavedPost>.Filter.And(
-                Builders<SavedPost>.Filter.Eq(p => p.UserId, userId),
+                Builders<SavedPost>.Filter.Eq(p => p.User.Id, userId),
                 Builders<SavedPost>.Filter.Eq(p => p.IsDeleted, false));
 
             var update = Builders<SavedPost>.Update.Set(p => p.IsDeleted, true);
@@ -45,7 +45,7 @@ public class SavedPostRepository : MongoGenericRepository<SavedPost>, ISavedPost
 
         var filter = Builders<SavedPost>.Filter.And(
             Builders<SavedPost>.Filter.In(p => p.PostId, postIds),
-            Builders<SavedPost>.Filter.Eq(p => p.UserId, userId),
+            Builders<SavedPost>.Filter.Eq(p => p.User.Id, userId),
             Builders<SavedPost>.Filter.Eq(p => p.IsDeleted, false)
         );
         var projection = Builders<SavedPost>.Projection
@@ -55,7 +55,6 @@ public class SavedPostRepository : MongoGenericRepository<SavedPost>, ISavedPost
         var result = database.GetCollection<SavedPost>(collectionName).Find(filter)
             .Project(projection)
             .ToList();
-        
         var postsInformation = new Dictionary<string, bool>();
 
         foreach (var document in result)

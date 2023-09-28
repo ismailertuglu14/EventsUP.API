@@ -8,7 +8,7 @@ public class UserFollow : AbstractEntity
 {
     [BsonRepresentation(BsonType.ObjectId)]
     public string SourceId { get; set; }
-    
+
     [BsonRepresentation(BsonType.ObjectId)]
     public string TargetId { get; set; }
 }

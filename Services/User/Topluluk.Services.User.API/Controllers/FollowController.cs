@@ -13,13 +13,13 @@ public class FollowController : BaseController
 {
 
     private readonly IFollowService _followService;
-    
+
     public FollowController(IFollowService followService)
     {
         _followService = followService;
     }
-    
-    
+
+
     [HttpPost("Follow")]
     public async Task<Response<NoContent>> FollowUser( [FromBody] UserFollowDto userFollowInfo)
     {
@@ -72,7 +72,6 @@ public class FollowController : BaseController
         return await _followService.GetUserFollowSuggestions(this.UserId);
     }
 
-    
     //HTTP
     [HttpGet("user-followings")]
     public async Task<Response<List<string>>> GetUserFollowings(string id)

@@ -38,6 +38,11 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+var configuration = new OcelotPipelineConfiguration
+{
+};
+
+
 await app.UseOcelot();
 
 app.Run();

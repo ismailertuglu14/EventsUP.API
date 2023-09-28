@@ -1,13 +1,9 @@
-﻿
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Topluluk.Services.User.Model.Dto;
 using Topluluk.Services.User.Model.Dto.Http;
 using Topluluk.Services.User.Services.Interface;
 using Topluluk.Shared.BaseModels;
 using Topluluk.Shared.Dtos;
-
 
 namespace Topluluk.Services.User.API.Controllers
 {
@@ -19,7 +15,6 @@ namespace Topluluk.Services.User.API.Controllers
         public UserController(IUserService userService)
         {
             _userService = userService;
-
         }
 
         [HttpGet("GetUserById")]
@@ -55,18 +50,6 @@ namespace Topluluk.Services.User.API.Controllers
         public async Task<Response<List<UserSearchResponseDto>>?> SearchUser([FromQuery] string text, int skip = 0, int take = 5)
         {
             return await _userService.SearchUser(text, this.UserId, skip, take);
-        }
-
-        [HttpGet("search-in-followings")]
-        public async Task<Response<List<FollowingUserDto>>?> SearchUser(string id, string text, int skip = 0, int take = 10)
-        {
-            return await _userService.SearchInFollowings(this.UserId, id, text, skip, take);
-        }
-
-        [HttpGet("[action]")]
-        public async Task<Response<GetUserAfterLoginDto>> GetUserAfterLogin()
-        {
-            return await _userService.GetUserAfterLogin(this.UserId);
         }
 
         [HttpPost("delete")]

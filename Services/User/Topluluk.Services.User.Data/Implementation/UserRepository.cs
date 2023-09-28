@@ -1,11 +1,7 @@
-﻿using System;
 using DBHelper.Connection;
 using DBHelper.Repository.Mongo;
 using MongoDB.Driver;
 using Topluluk.Services.User.Data.Interface;
-using Topluluk.Services.User.Model.Dto;
-using Topluluk.Services.User.Model.Entity;
-using Topluluk.Shared.Dtos;
 using _User = Topluluk.Services.User.Model.Entity.User;
 
 namespace Topluluk.Services.User.Data.Implementation
@@ -37,8 +33,6 @@ namespace Topluluk.Services.User.Data.Implementation
 
             return database.GetCollection<_User>(collectionName).Find(u => u.Email == email).AnyAsync();
         }
-
-        
     }
 }
 
