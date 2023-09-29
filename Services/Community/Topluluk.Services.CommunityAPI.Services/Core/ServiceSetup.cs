@@ -27,7 +27,6 @@ namespace Topluluk.Services.CommunityAPI.Services.Core
             // services.AddTransient<IUnitOfWork, UnitOfWork>();
             services.AddScoped<ICommunityRepository, CommunityRepository>();
             services.AddScoped<ICommunityParticipiantRepository, CommunityParticipiantRepository>();
-            
         }
 
         public static void AddServicesForServices(this IServiceCollection services)
@@ -35,6 +34,7 @@ namespace Topluluk.Services.CommunityAPI.Services.Core
             services.AddTransient<ICommunityService, CommunityService>();
             services.AddTransient<ICommunityImageService, CommunityImageService>();
             services.AddTransient<IParticipiantService,ParticipiantService>();
+            services.AddHttpContextAccessor();
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using Topluluk.Services.CommunityAPI.Model.Dto.Http;
 using Topluluk.Services.CommunityAPI.Model.Entity;
+using Topluluk.Shared.Dtos;
 using Topluluk.Shared.Enums;
 
 namespace Topluluk.Services.CommunityAPI.Model.Dto
@@ -8,12 +9,7 @@ namespace Topluluk.Services.CommunityAPI.Model.Dto
 	public class CommunityGetByIdDto
     {
 	    public string Id { get; set; }
-        public string AdminId { get; set; }
-        public string AdminName { get; set; }
-        public string AdminLastName { get; set; }
-        public string AdminImage { get; set; }
-        public GenderEnum AdminGender { get; set; }
-
+        public User Admin { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
 

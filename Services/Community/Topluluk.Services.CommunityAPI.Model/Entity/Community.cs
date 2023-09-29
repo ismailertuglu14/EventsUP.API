@@ -7,8 +7,7 @@ namespace Topluluk.Services.CommunityAPI.Model.Entity
 {
 	public class Community : AbstractEntity
 	{
-		public string? AdminId { get; set; }
-
+		public User Admin { get; set; }
 		public ICollection<Moderator> ModeratorIds { get; set; }
 		public string Title { get; set; }
 		public string Slug { get; set; }
@@ -23,11 +22,8 @@ namespace Topluluk.Services.CommunityAPI.Model.Entity
 		public int? ParticipiantLimit { get; set; }
 		public string? Location { get; set; }
 
-
 		public ICollection<Question> Questions { get; set; }
-
 		public ICollection<string> Cities { get; set; }
-
 		public ICollection<string> BlockedUsers { get; set; }
 
 		//public ICollection<string> Posts { get; set; }
@@ -45,7 +41,7 @@ namespace Topluluk.Services.CommunityAPI.Model.Entity
 	}
 	public class Moderator
 	{
-		public string UserId { get; set; }
+		public User User { get; set; }
 		public string AssignedById { get; set; }
 	}
 	public class Question
