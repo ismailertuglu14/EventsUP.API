@@ -1,35 +1,29 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
-using RestSharp;
 using Topluluk.Services.PostAPI.Data.Interface;
 using Topluluk.Services.PostAPI.Model.Dto;
-using Topluluk.Services.PostAPI.Model.Dto.Http;
 using Topluluk.Services.PostAPI.Model.Entity;
 using Topluluk.Services.PostAPI.Services.Interface;
-using Topluluk.Shared.Constants;
+using Topluluk.Shared.BaseModels;
 using Topluluk.Shared.Dtos;
 using Topluluk.Shared.Exceptions;
-using Topluluk.Shared.Helper;
 using ResponseStatus = Topluluk.Shared.Enums.ResponseStatus;
 
 namespace Topluluk.Services.PostAPI.Services.Implementation;
 
-public class PostCommentService : IPostCommentService
+public class PostCommentService : BaseService, IPostCommentService
 {
     private readonly IMapper _mapper;
     private readonly IPostRepository _postRepository;
     private readonly IPostCommentRepository _commentRepository;
     private readonly ICommentInteractionRepository _commentInteractionRepository;
-    private readonly IHttpContextAccessor _httpContext;
-    public PostCommentService(IMapper mapper, IPostRepository postRepository, IPostCommentRepository commentRepository, ICommentInteractionRepository commentInteractionRepository, IHttpContextAccessor httpContext)
+    public PostCommentService(IMapper mapper, IPostRepository postRepository, IPostCommentRepository commentRepository, ICommentInteractionRepository commentInteractionRepository, IHttpContextAccessor httpContextAccessor) : base(httpContextAccessor) 
     {
         _mapper = mapper;
         _postRepository = postRepository;
         _commentRepository = commentRepository;
         _commentInteractionRepository = commentInteractionRepository;
-        _httpContext = httpContext;
     }
-    private string Token => _httpContext.HttpContext.Request.Headers["Authorization"]!;
     public async Task<Response<List<CommentGetDto>>> GetComments(string userId, string postId, CommentFilter filter = CommentFilter.InteractionDescending, int skip = 0,int take = 10)
     {
         List<PostComment> response = new List<PostComment>();
@@ -94,7 +88,7 @@ public class PostCommentService : IPostCommentService
 
     public async Task<Response<NoContent>> CreateComment(CommentCreateDto commentDto)
     {
-        User? user = await HttpRequestHelper.GetUser(Token);
+        User? user = await GetCurrentUserAsync();
         if (user == null)
             throw new UnauthorizedAccessException();
         Post? post = await _postRepository.GetFirstAsync(p => p.Id == commentDto.PostId);
@@ -110,7 +104,7 @@ public class PostCommentService : IPostCommentService
 
     public async Task<Response<NoContent>> UpdateComment(string userId, CommentUpdateDto commentDto)
     {
-        User? user = await HttpRequestHelper.GetUser(userId);
+        User? user = await GetCurrentUserAsync();
         if (user == null)
             throw new UnauthorizedAccessException();
         PostComment? comment = await _commentRepository.GetFirstAsync(c => c.Id == commentDto.CommentId);
@@ -151,8 +145,8 @@ public class PostCommentService : IPostCommentService
 
     public async Task<Response<NoContent>> Interaction(string userId, string commentId, int type)
     {
-        User? user = await HttpRequestHelper.GetUser(Token);
-        if(user == null) throw new UnauthorizedAccessException();
+        User? user = await GetCurrentUserAsync();
+        if (user == null) throw new UnauthorizedAccessException();
         if (!Enum.IsDefined(typeof(CommentInteractionEnum), type))
             throw new ArgumentException("Interaction Type does not allowed! Please provide valid interaction type.");
 

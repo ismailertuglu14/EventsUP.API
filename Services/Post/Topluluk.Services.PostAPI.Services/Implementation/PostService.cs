@@ -13,11 +13,12 @@ using MongoDB.Driver;
 using Topluluk.Shared.Constants;
 using Topluluk.Shared.Exceptions;
 using ResponseStatus = Topluluk.Shared.Enums.ResponseStatus;
-using Topluluk.Shared.Helper;
+using Topluluk.Shared.BaseModels;
+using Microsoft.AspNetCore.Http;
 
 namespace Topluluk.Services.PostAPI.Services.Implementation
 {
-	public class PostService : IPostService
+	public class PostService : BaseService, IPostService
 	{
         private readonly IPostRepository _postRepository;
         private readonly ISavedPostRepository _savedPostRepository;
@@ -26,7 +27,8 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
         private readonly IMapper _mapper;
         private readonly RestClient _client;
         private readonly IMongoClient _mongoClient;
-        public PostService(IPostRepository postRepository, IPostInteractionRepository postInteractionRepository, ISavedPostRepository savedPostRepository, IPostCommentRepository commentRepository, IMapper mapper, IMongoClient mongoClient)
+        public PostService(IPostRepository postRepository, IPostInteractionRepository postInteractionRepository, ISavedPostRepository savedPostRepository,
+            IPostCommentRepository commentRepository, IMapper mapper, IMongoClient mongoClient, IHttpContextAccessor httpContextAccessor) : base(httpContextAccessor)
         {
             _postRepository = postRepository;
             _savedPostRepository = savedPostRepository;
@@ -38,8 +40,8 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
         }
         public async Task<Response<string>> SavePost(string token, string userId, string postId)
         {
-            User? user = await HttpRequestHelper.GetUser(token);
-            if(user == null) throw new UnauthorizedAccessException("User not found");
+            User? user = await GetCurrentUserAsync();
+            if (user == null) throw new UnauthorizedAccessException("User not found");
 
             SavedPost? _savedPost = await _savedPostRepository.GetFirstAsync(sp => sp.PostId == postId);
             if (_savedPost == null)
@@ -73,7 +75,6 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
             var userCommunitiesTask = _client.ExecuteGetAsync<Response<List<CommunityInfoPostLinkDto>>>(userCommunitiesRequest);
 
             await Task.WhenAll(getUserFollowingsTask, userCommunitiesTask);
-
 
             // Id list of users followed by Source User
             var getUserFollowingsResponse = getUserFollowingsTask.Result.Data.Data;
@@ -156,7 +157,7 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
 
         public async Task<Response<string>> Create(string token, string userId, CreatePostDto postDto)
         {
-            User? user = await HttpRequestHelper.GetUser(token);
+            User? user = await GetCurrentUserAsync();
             if (user == null)
             {
                 return await Task.FromResult(Response<string>.Fail("User not found", ResponseStatus.NotFound));

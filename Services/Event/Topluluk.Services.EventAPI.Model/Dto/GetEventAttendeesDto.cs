@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Topluluk.Shared.Enums;
+﻿using Topluluk.Shared.Enums;
 
 namespace Topluluk.Services.EventAPI.Model.Dto
 {

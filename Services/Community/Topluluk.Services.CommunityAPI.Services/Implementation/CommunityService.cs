@@ -26,7 +26,6 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
         private readonly IMapper _mapper;
         private readonly ICommunityParticipiantRepository _participiantRepository;
         private readonly RestClient _client;
-        
         public CommunityService(ICommunityRepository communityRepository, IMapper mapper, ICommunityParticipiantRepository participiantRepository, IHttpContextAccessor httpContextAccessor) : base(httpContextAccessor)
         {
             _communityRepository = communityRepository;
@@ -69,7 +68,6 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
             }
         }
 
-
         public async Task<Response<int>> GetUserParticipiantCommunitiesCount(string userId)
         {
             try
@@ -102,7 +100,6 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                 return await Task.FromResult(Response<CommunityGetByIdDto>.Fail("Not Visible public", ResponseStatus.NotFound));
             }
 
-
             var participiantCountTask = _participiantRepository.Count(p => !p.IsDeleted && p.CommunityId == community.Id && p.Status == ParticipiantStatus.ACCEPTED);
             var IsParticipiantTask =  _participiantRepository.AnyAsync(p => !p.IsDeleted && p.CommunityId == communityId && p.User.Id == userId && p.Status == ParticipiantStatus.ACCEPTED);
 
@@ -119,8 +116,6 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
             _community.IsParticipiant = IsParticipiantTask.Result;
             return await Task.FromResult(Response<CommunityGetByIdDto>.Success(_community, ResponseStatus.Success));
         }
-
-
 
         public async Task<Response<string>> Create(string userId,string token, CommunityCreateDto communityInfo)
         {
@@ -224,7 +219,6 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
             return await Task.FromResult(Response<string>.Success(response.Data, ResponseStatus.Success));
         }
 
-
         public async Task<Response<string>> Delete(string ownerId,string communityId)
         {
             try
@@ -247,7 +241,6 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                 return await Task.FromResult(Response<string>.Fail($"Error occured: {e}", ResponseStatus.NotAuthenticated));
             }
         }
-
 
         public async Task<Response<NoContent>> KickUser(string token, string communityId, string userId)
         {
@@ -283,7 +276,6 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                 return Response<NoContent>.Fail(e.ToString(), ResponseStatus.InitialError);
             }
         }
-
 
         public async Task<Response<string>> AssignUserAsAdmin(string userId, AssignUserAsAdminDto dtoInfo)
         {
@@ -333,7 +325,6 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
             }
         }
 
-
         public async Task<Response<string>> DeletePermanently(string ownerId, string communityId)
         {
 
@@ -349,7 +340,6 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                 return Response<string>.Fail("Not authorized for delete community. You are not an admin!", ResponseStatus.NotAuthenticated);
             }
         }
-
 
         public async Task<Response<string>> GetCommunityTitle(string id)
         {
