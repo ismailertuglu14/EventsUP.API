@@ -14,10 +14,11 @@ using ResponseStatus = Topluluk.Shared.Enums.ResponseStatus;
 using _MassTransit = MassTransit;
 using Microsoft.AspNetCore.Http;
 using Topluluk.Shared.Helper;
+using Topluluk.Shared.BaseModels;
 
 namespace Topluluk.Services.EventAPI.Services.Implementation
 {
-    public class EventService : IEventService
+    public class EventService : BaseService, IEventService
     {
 
         private readonly IMapper _mapper;
@@ -26,8 +27,14 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
         private readonly IEventCommentRepository _commentRepository;
         private readonly IEventAttendeesRepository _attendeesRepository;
         private readonly _MassTransit.ISendEndpointProvider _endpointProvider;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        public EventService(_MassTransit.ISendEndpointProvider endpointProvider, IEventRepository eventRepository, IMapper mapper, IEventCommentRepository commentRepository, IEventAttendeesRepository attendeesRepository, IHttpContextAccessor httpContextAccessor)
+
+        public EventService
+            (
+            _MassTransit.ISendEndpointProvider endpointProvider, IEventRepository eventRepository,
+            IMapper mapper, IEventCommentRepository commentRepository,
+            IEventAttendeesRepository attendeesRepository, 
+            IHttpContextAccessor httpContextAccessor
+            ) : base(httpContextAccessor)
         {
             _endpointProvider = endpointProvider;
             _mapper = mapper;
@@ -35,9 +42,7 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
             _eventRepository = eventRepository;
             _commentRepository = commentRepository;
             _attendeesRepository = attendeesRepository;
-            _httpContextAccessor = httpContextAccessor;
         }
-        private string Token => _httpContextAccessor.HttpContext.Request.Headers["Authorization"];
         public async Task<Response<string>> CreateEvent(string userId, string token, CreateEventDto dto)
         {
             try
@@ -409,6 +414,7 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
             }
 
         }
+
     }
 }
 

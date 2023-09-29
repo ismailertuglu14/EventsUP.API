@@ -11,6 +11,7 @@ using Topluluk.Services.CommunityAPI.Model.Dto;
 using Topluluk.Services.CommunityAPI.Model.Dto.Http;
 using Topluluk.Services.CommunityAPI.Model.Entity;
 using Topluluk.Services.CommunityAPI.Services.Interface;
+using Topluluk.Shared.BaseModels;
 using Topluluk.Shared.Constants;
 using Topluluk.Shared.Dtos;
 using Topluluk.Shared.Exceptions;
@@ -19,23 +20,20 @@ using ResponseStatus = Topluluk.Shared.Enums.ResponseStatus;
 
 namespace Topluluk.Services.CommunityAPI.Services.Implementation
 {
-    public class CommunityService : ICommunityService
+    public class CommunityService : BaseService, ICommunityService
     {
         private readonly ICommunityRepository _communityRepository;
         private readonly IMapper _mapper;
         private readonly ICommunityParticipiantRepository _participiantRepository;
         private readonly RestClient _client;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-
-        public CommunityService(ICommunityRepository communityRepository, IMapper mapper, ICommunityParticipiantRepository participiantRepository, IHttpContextAccessor httpContextAccessor)
+        
+        public CommunityService(ICommunityRepository communityRepository, IMapper mapper, ICommunityParticipiantRepository participiantRepository, IHttpContextAccessor httpContextAccessor) : base(httpContextAccessor)
         {
             _communityRepository = communityRepository;
             _participiantRepository = participiantRepository;
             _mapper = mapper;
             _client = new RestClient();
-            _httpContextAccessor = httpContextAccessor;
         }
-        private string? Token => _httpContextAccessor.HttpContext.Request.Headers["Authorization"];
 
         public async Task<Response<List<CommunityGetPreviewDto>>> GetCommunitySuggestions(string userId, HttpRequest request, int skip = 0, int take = 5)
         {
@@ -126,6 +124,8 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
 
         public async Task<Response<string>> Create(string userId,string token, CommunityCreateDto communityInfo)
         {
+            User? currentUser = await GetCurrentUserAsync();
+            if (currentUser == null) throw new UnauthorizedAccessException();
 
             string slug = StringToSlugConvert(communityInfo.Title);
             bool isSluqUnique = false;
@@ -146,8 +146,7 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
 
             Community community = _mapper.Map<Community>(communityInfo);
             community.Slug = slug;
-            community.Admin.Id = userId;
-
+            community.Admin = currentUser;
             if (communityInfo.CoverImage != null)
             {
                 byte[] imageBytes;
