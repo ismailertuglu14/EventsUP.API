@@ -22,7 +22,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Helper\" />
-    <Folder Include="BaseModels\" />
     <Folder Include="Messages\Authentication\" />
   </ItemGroup>
   <ItemGroup>
