@@ -353,9 +353,6 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
             }
         }
 
-
-        
-
         public async Task<Response<List<GetEventAttendeesDto>>> GetEventAttendees(string token, string eventId,
             int skip = 0, int take = 10)
         {
@@ -363,8 +360,19 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
             {
                 Event _event = await _eventRepository.GetFirstAsync(e => e.Id == eventId);
                 if (_event == null) throw new Exception("Event Not found");
-                List<EventAttendee> attendees = _attendeesRepository.GetListByExpressionPaginated(skip,take, e => e.EventId == eventId);
-                List<GetEventAttendeesDto> dtos = _mapper.Map<List<EventAttendee>, List<GetEventAttendeesDto>>(attendees);
+                List<EventAttendee> attendees = _attendeesRepository.GetListByExpressionPaginated(skip, take, e => e.EventId == eventId);
+                List<GetEventAttendeesDto> dtos = new();
+                foreach (var attendee in attendees)
+                {
+                    dtos.Add(new()
+                    {
+                        Id = attendee.User.Id,
+                        FullName = attendee.User.FullName,
+                        ProfileImage = attendee.User.ProfileImage,
+                        Gender = attendee.User.Gender,
+                        UserName = attendee.User.UserName,
+                    });
+                }
                 return Response<List<GetEventAttendeesDto>>.Success(dtos, ResponseStatus.Success);
             }
             catch (Exception e)

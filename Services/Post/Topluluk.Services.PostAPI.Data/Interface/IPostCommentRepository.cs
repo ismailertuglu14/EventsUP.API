@@ -2,6 +2,7 @@
 using System.Linq.Expressions;
 using DBHelper.Repository;
 using Topluluk.Services.PostAPI.Model.Entity;
+using Topluluk.Shared.Dtos;
 
 namespace Topluluk.Services.PostAPI.Data.Interface
 {
@@ -15,6 +16,8 @@ namespace Topluluk.Services.PostAPI.Data.Interface
 		Task<bool> DeletePostsComments(string userId);
 		Task<Dictionary<string, int>> GetPostCommentCounts(List<string> postIds);
 		Task<Dictionary<string, int>> GetCommentsReplyCounts(List<string> commentIds);
-	}
+        Task<bool> UserUpdated(User newUser);
+
+    }
 }
 

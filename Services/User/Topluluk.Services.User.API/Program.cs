@@ -10,6 +10,7 @@ using Topluluk.Services.User.Services.Core;
 using Topluluk.Shared.Dtos;
 using Topluluk.Shared.Middleware;
 using Newtonsoft.Json;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +33,22 @@ var mapperConfig = new MapperConfiguration(cfg =>
 });
 builder.Services.AddSingleton(mapperConfig.CreateMapper());
 IConfiguration configuration = builder.Configuration;
+
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(new Uri(configuration.GetSection("RabbitMQ:Host").Value), host =>
+        {
+            host.Username(configuration.GetSection("RabbitMQ:Username").Value);
+            host.Password(configuration.GetSection("RabbitMQ:Password").Value);
+        });
+
+    });
+});
+
+builder.Services.AddMassTransitHostedService();
+
 var multiplexer = ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis"));
 builder.Services.AddSingleton<IConnectionMultiplexer>(multiplexer);
 builder.Services.AddInfrastructure();
@@ -60,7 +77,7 @@ builder.Services.AddAuthentication(options =>
             context.HandleResponse();
             context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
             context.Response.ContentType = "application/json";
-            var errorResponse = new Response<string>
+            var errorResponse = new Topluluk.Shared.Dtos.Response<string>
             {
                 Data = null!,
                 StatusCode = Topluluk.Shared.Enums.ResponseStatus.Unauthorized,
