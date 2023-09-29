@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Driver;
+using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -10,21 +11,17 @@ namespace DBHelper.Repository
     {
         int Count();
         Task<int> Count(Expression<Func<T, bool>> predicate);
-        DatabaseResponse GetById(string id);
-
-        Task<DatabaseResponse> GetByIdAsync(string id);
-
-        Task<DatabaseResponse> GetListByIdAsync(List<string> id);
-
         Task<bool> AnyAsync(Expression<Func<T, bool>> predicate);
+
+        DatabaseResponse GetById(string id);
         DatabaseResponse GetByIdWithDeleted(string id);
+        Task<DatabaseResponse> GetByIdAsync(string id);
         Task<DatabaseResponse> GetByIdWithDeletedAsync(string id);
-
-        T GetFirst(Expression<Func<T, bool>>? predicate = null);
+        Task<DatabaseResponse> GetListByIdAsync(List<string> id);
         Task<T> GetFirstAsync(Expression<Func<T, bool>>? predicate = null);
-
         T GetFirstWithDeleted(Expression<Func<T, bool>>? predicate = null);
         Task<T> GetFirstWithDeletedAsync(Expression<Func<T, bool>>? predicate = null);
+        T GetFirst(Expression<Func<T, bool>>? predicate = null);
 
         T GetByExpression(Expression<Func<T, bool>>? predicate = null);
         Task<T> GetByExpressionAsync(Expression<Func<T, bool>>? predicate = null);
@@ -49,6 +46,7 @@ namespace DBHelper.Repository
 
         DatabaseResponse Update(T entity);
         DatabaseResponse BulkUpdate(List<T> entityList);
+        Task<bool> BulkUpdateAsync(Expression<Func<T, bool>> filter, UpdateDefinition<T> update);
 
         DatabaseResponse DeleteById(T entity);
         DatabaseResponse DeleteById(string id);

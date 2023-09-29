@@ -6,6 +6,8 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using Topluluk.Services.PostAPI.Data.Interface;
 using Topluluk.Services.PostAPI.Model.Entity;
+using Topluluk.Shared.Dtos;
+using Topluluk.Shared.Messages.User;
 
 namespace Topluluk.Services.PostAPI.Data.Implementation
 {
@@ -13,10 +15,12 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
 	{
 
         private readonly IConnectionFactory _connectionFactory;
+        private readonly IMongoClient _mongoClient;
 
-		public PostRepository(IConnectionFactory connectionFactory) : base(connectionFactory)
-		{
+        public PostRepository(IConnectionFactory connectionFactory, IMongoClient mongoClient) : base(connectionFactory)
+        {
             _connectionFactory = connectionFactory;
+            _mongoClient = mongoClient;
         }
         private new IMongoDatabase GetConnection() => (MongoDB.Driver.IMongoDatabase)_connectionFactory.GetConnection;
 
@@ -61,6 +65,37 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
 
             var documents = await cursor.ToListAsync();
             return documents;
+        }
+
+        public async Task<bool> UserUpdated( User newUser)
+        {
+            var database = GetConnection();
+            var collectionName = GetCollectionName();
+            using (var session = await _mongoClient.StartSessionAsync())
+            {
+                session.StartTransaction();
+                try
+                {
+                    long documentCount = await database.GetCollection<Post>(collectionName).CountDocumentsAsync(session, p => p.User.Id == newUser.Id);
+                    var response = await database.GetCollection<Post>(collectionName).UpdateManyAsync(session, p => p.User.Id == newUser.Id, Builders<Post>.Update.Set(p => p.User, newUser));
+                    
+                    if(response.ModifiedCount == documentCount)
+                    {
+                        await session.CommitTransactionAsync();
+                        return true;
+                    }
+                    else
+                    {
+                        throw new Exception($"Modified counts doesnt match, documentCount: {documentCount}, modifiedCount: {response.ModifiedCount}");
+                    }
+                }
+                catch(Exception e)
+                {
+                    await session.AbortTransactionAsync();
+                    return false;
+                }
+            }
+              
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using DBHelper.Connection;
+using MongoDB.Driver;
 using Topluluk.Shared.Dtos;
 
 namespace DBHelper.Repository.SQL
@@ -233,7 +234,10 @@ namespace DBHelper.Repository.SQL
             throw new NotImplementedException();
         }
 
-      
+        public Task<bool> BulkUpdateAsync(Expression<Func<T, bool>> filter, UpdateDefinition<T> update)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 

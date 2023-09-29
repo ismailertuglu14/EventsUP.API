@@ -14,7 +14,9 @@ using Topluluk.Shared.Dtos;
 using _User = Topluluk.Services.User.Model.Entity.User;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using ResponseStatus = Topluluk.Shared.Enums.ResponseStatus;
+using Topluluk.Shared.Messages.User;
 using _MassTransit = MassTransit;
+
 namespace Topluluk.Services.User.Services.Implementation
 {
     public class UserService : IUserService
@@ -26,8 +28,8 @@ namespace Topluluk.Services.User.Services.Implementation
         private readonly RestClient _client;
         private readonly IRedisRepository _redisRepository;
         private readonly IUserFollowRequestRepository _followRequestRepository;
-     //   private readonly _MassTransit.IPublishEndpoint _publishEndpoint;
-        public UserService(IRedisRepository redisRepository, IUserRepository userRepository, IBlockedUserRepository blockedUserRepository, IUserFollowRepository followRepository, IMapper mapper, IUserFollowRequestRepository followRequestRepository)
+        private readonly _MassTransit.IPublishEndpoint _publishEndpoint;
+        public UserService(IRedisRepository redisRepository, IUserRepository userRepository, IBlockedUserRepository blockedUserRepository, IUserFollowRepository followRepository, IMapper mapper, IUserFollowRequestRepository followRequestRepository, _MassTransit.IPublishEndpoint publishEndpoint)
         {
             _redisRepository = redisRepository;
             _userRepository = userRepository;
@@ -36,6 +38,7 @@ namespace Topluluk.Services.User.Services.Implementation
             _mapper = mapper;
             _followRequestRepository = followRequestRepository;
             _client = new RestClient();
+            _publishEndpoint = publishEndpoint;
         }
         public async Task<Response<GetUserByIdDto>> GetUserById(string id, string userId)
         {
@@ -383,7 +386,14 @@ namespace Topluluk.Services.User.Services.Implementation
             user.BirthdayDate = userDto.BirthdayDate;
             user.Title = userDto.Title.IsNullOrEmpty() ? user.Title : userDto.Title;
             DatabaseResponse response = _userRepository.Update(user);
-
+            UserUpdatedEvent userUpdatedEvent = new() {
+                Id = user.Id,
+                FullName = user.FullName,
+                UserName = user.UserName,
+                ProfileImage = user.ProfileImage,
+                Gender = user.Gender,
+            };
+            await _publishEndpoint.Publish<UserUpdatedEvent>(userUpdatedEvent);
             if (response.IsSuccess)
             {
                 return Response<NoContent>.Success(ResponseStatus.Success);

@@ -393,6 +393,12 @@ namespace DBHelper.Repository.Mongo
             return (int)response;
         }
 
+        public async Task<bool> BulkUpdateAsync(Expression<Func<T, bool>> filter, UpdateDefinition<T> update)
+        {
+            var response = await _collection.UpdateManyAsync(filter, update);
+            
+            return response.ModifiedCount > 0;
+        }
     }
 }
 

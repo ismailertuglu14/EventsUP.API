@@ -16,7 +16,7 @@ namespace Topluluk.Services.User.Model.Entity
 		public string? ProfileImage { get; set; }
 		public string? BannerImage { get; set; }
 
-		public GenderEnum? Gender { get; set; }
+		public GenderEnum Gender { get; set; }
 
 		public DateTime? BirthdayDate { get; set; }
 
