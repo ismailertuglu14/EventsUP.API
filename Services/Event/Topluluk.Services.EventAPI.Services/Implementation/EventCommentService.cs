@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using RestSharp;
 using Topluluk.Services.EventAPI.Data.Interface;
 using Topluluk.Services.EventAPI.Model.Dto;
@@ -7,6 +8,7 @@ using Topluluk.Services.EventAPI.Model.Entity;
 using Topluluk.Services.EventAPI.Services.Interface;
 using Topluluk.Shared.Constants;
 using Topluluk.Shared.Dtos;
+using Topluluk.Shared.Helper;
 using ResponseStatus = Topluluk.Shared.Enums.ResponseStatus;
 
 namespace Topluluk.Services.EventAPI.Services.Implementation;
@@ -17,22 +19,27 @@ public class EventCommentService : IEventCommentService
     private readonly IMapper _mapper;
     private readonly RestClient _client;
     private readonly IEventCommentRepository _commentRepository;
-
-    public EventCommentService( IMapper mapper, IEventCommentRepository commentRepository)
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    public EventCommentService(IMapper mapper, IEventCommentRepository commentRepository, IHttpContextAccessor httpContextAccessor)
     {
         _mapper = mapper;
         _client = new RestClient();
         _commentRepository = commentRepository;
+        _httpContextAccessor = httpContextAccessor;
     }
 
+    private string Token => _httpContextAccessor.HttpContext.Request.Headers["Authorization"];
 
-    
+
     public async Task<Response<string>> CreateComment(string userId, CommentCreateDto dto)
     {
         try
         {
+            User? user = await HttpRequestHelper.GetUser(Token);
+            if (user == null) throw new UnauthorizedAccessException();
+
             EventComment comment = _mapper.Map<EventComment>(dto);
-            comment.UserId = userId;
+            comment.User = user;
             comment.EventId = dto.EventId;
             DatabaseResponse response = await _commentRepository.InsertAsync(comment);
             return await Task.FromResult(Response<string>.Success(response.Data, ResponseStatus.Success));
@@ -55,13 +62,13 @@ public class EventCommentService : IEventCommentService
                 return await Task.FromResult(Response<NoContent>.Fail("", ResponseStatus.NotFound));
             }
             
-            if (!id.Equals(comment.UserId))
+            if (!id.Equals(comment.User.Id))
             {   
                 return await Task.FromResult(Response<NoContent>.Fail("Unatuhorized",
                 ResponseStatus.Unauthorized));
             }
             
-            _commentRepository.DeleteByExpression(c => c.UserId == comment.UserId);
+            _commentRepository.DeleteByExpression(c => c.User.Id == comment.User.Id);
             return await Task.FromResult(Response<NoContent>.Success(ResponseStatus.Success));
         }
         catch (Exception e)
@@ -73,30 +80,10 @@ public class EventCommentService : IEventCommentService
 
     public async Task<Response<List<GetEventCommentDto>>> GetEventComments(string userId, string id, int skip = 0, int take = 10)
     {
-        var response = _commentRepository.GetListByExpressionPaginated(skip,take, c => c.EventId == id);
+        List<EventComment> response = _commentRepository.GetListByExpressionPaginated(skip,take, c => c.EventId == id);
         if (response != null && response.Count > 0)
         {
             List<GetEventCommentDto> dtos = _mapper.Map<List<EventComment>, List<GetEventCommentDto>>(response);
-            IdList idList = new(dtos.Select(c => c.UserId).ToList());
-            var userRequest = new RestRequest(ServiceConstants.API_GATEWAY + "/user/get-user-info-list").AddBody(idList);
-            var userResponse = await _client.ExecutePostAsync<Response<List<UserInfoDto>>>(userRequest);
-            if(!userResponse.IsSuccessful || userResponse.Data.Data == null)
-            {
-                throw new Exception("User service call exception");
-            }
-            foreach (var dto in dtos)
-            {
-                var user = userResponse.Data.Data.FirstOrDefault(u => u.Id == dto.UserId);
-                if (user == null)
-                {
-                    dtos.Remove(dto);
-                    continue;
-                }
-                dto.FirstName = user.FirstName;
-                dto.LastName = user.LastName;
-                dto.ProfileImage = user.ProfileImage;
-                dto.Gender = user.Gender;
-            }
             return Response<List<GetEventCommentDto>>.Success(dtos, ResponseStatus.Success);
         }
         return Response<List<GetEventCommentDto>>.Success(new(), ResponseStatus.Success);

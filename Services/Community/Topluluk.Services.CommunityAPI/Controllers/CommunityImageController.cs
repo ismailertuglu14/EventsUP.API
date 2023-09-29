@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Topluluk.Services.CommunityAPI.Model.Dto;
 using Topluluk.Services.CommunityAPI.Services.Interface;
-using Topluluk.Services.FileAPI.Model.Dto.Http;
 using Topluluk.Shared.BaseModels;
 using Topluluk.Shared.Dtos;
 

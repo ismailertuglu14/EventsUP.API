@@ -36,7 +36,7 @@ public class ParticipiantController : BaseController
     /// <param name="take"></param>
     /// <returns></returns>
     [HttpGet("{communityId}/Participiants")]
-    public async Task<Response<List<UserDto>>> GetParticipiants(string communityId, int skip, int take)
+    public async Task<Response<List<User>>> GetParticipiants(string communityId, int skip, int take)
     {
         return await _participiantService.GetParticipiants(this.Token, communityId, skip, take);
     }
@@ -45,19 +45,19 @@ public class ParticipiantController : BaseController
     /// Search spesific user in the community participiants
     /// </summary>
     /// <param name="communityId"></param>
-    /// <param name="q"></param>
-    /// <param name="skip"></param>
-    /// <param name="take"></param>
+    /// <param name="q"> Searched user </param>
+    /// <param name="skip"> Offset parameter </param>
+    /// <param name="take"> Limit parameter </param>
     /// <returns></returns>
     [HttpGet("{communityId}/Participiants/Search")]
-    public async Task<Response<List<UserDto>>> SearchParticipiant(string communityId, string q, int skip, int take)
+    public async Task<Response<List<User>>> SearchParticipiant(string communityId, string q, int skip, int take)
     {
         return await _participiantService.SearchParticipiant(communityId, q, skip, take);
     }
 
 
     [HttpGet("join-requests")]
-    public async Task<Response<List<UserDto>>> JoinRequests([FromForm] string communityId, int skip, int take)
+    public async Task<Response<List<User>>> JoinRequests([FromForm] string communityId, int skip, int take)
     {
         return await _participiantService.GetJoinRequests(this.UserId, communityId, skip, take);
     }

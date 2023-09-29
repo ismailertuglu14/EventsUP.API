@@ -120,7 +120,7 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
             {
 
                 var postDto = postDtos.FirstOrDefault(p => p.Id == postDtos[i].Id);
-                postDto.IsFollowing = getUserFollowingsResponse.Contains(postDto.User.Id);
+                postDto.IsFollowing = getUserFollowingsResponse?.Contains(postDto.User.Id) ?? false;
                 postDto.InteractionCount = interactionCountsTask.Result.TryGetValue(postDto.Id, out var value)
                     ? value
                     : 0;
@@ -151,7 +151,6 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
                         _client.ExecuteGetAsync<Response<CommunityInfoPostLinkDto>>(communityInfoRequest);
                 }
             }
-
             return Response<List<GetPostForFeedDto>>.Success(postDtos, ResponseStatus.Success);
         }
 
