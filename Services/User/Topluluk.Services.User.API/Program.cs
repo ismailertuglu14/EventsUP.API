@@ -48,9 +48,6 @@ builder.Services.AddMassTransit(x =>
 });
 
 builder.Services.AddMassTransitHostedService();
-
-var multiplexer = ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis"));
-builder.Services.AddSingleton<IConnectionMultiplexer>(multiplexer);
 builder.Services.AddInfrastructure();
 builder.Services.AddAuthentication(options =>
 {

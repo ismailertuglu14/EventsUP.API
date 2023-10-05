@@ -388,14 +388,13 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
 
         public async Task<Response<List<EventDto>>> GetUserEvents(string id, string token)
         {
-
             try
             {
-                var events =  _eventRepository.GetListByExpressionPaginated(10, 0, e => e.User.Id == id);
-
+                List<Event>? events =  _eventRepository.GetListByExpressionPaginated(10, 0, e => e.User.Id == id);
+                
                 List<EventDto> dtos = _mapper.Map<List<Event>, List<EventDto>>(events);
-                var eventIds = dtos.Select(e => e.Id).ToList();
-                var eventsComments = await _commentRepository.GetEventCommentCounts(eventIds);
+                List<string>? eventIds = dtos.Select(e => e.Id).ToList();
+                Dictionary<string, int>? eventsComments = await _commentRepository.GetEventCommentCounts(eventIds);
                 byte i = 0;
                 foreach (var dto in dtos)
                 {
@@ -411,16 +410,12 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
                     dto.AttendeesCount = attendeesCountTask.Result;
                     dto.Location = events[i].IsLocationOnline ? events[i].LocationURL : events[i].LocationPlace;
                     i++;
-                }
-                
-                
-                return await Task.FromResult(Response<List<EventDto>>.Success(dtos, ResponseStatus.Success));
+                }                return await Task.FromResult(Response<List<EventDto>>.Success(dtos, ResponseStatus.Success));
             }
             catch (Exception e)
             {
                 return await Task.FromResult(Response<List<EventDto>>.Fail($"Some error occured: {e}", ResponseStatus.InitialError));
             }
-
         }
 
     }

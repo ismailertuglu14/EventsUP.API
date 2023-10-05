@@ -1,6 +1,7 @@
 ﻿using DBHelper.BaseDto;
 using DBHelper.Connection;
 using DBHelper.Connection.Mongo;
+using DBHelper.Connection.Redis;
 using DBHelper.Repository;
 using DBHelper.Repository.Redis;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,6 +26,7 @@ namespace Topluluk.Services.User.Services.Core
             services.AddSingleton<IDbConfiguration, UserAPIDbSettings>();
             services.AddSingleton<IConnectionFactory, MongoConnectionFactory>();
             services.AddSingleton<IBaseDatabaseSettings, MongoDatabaseSettings>();
+            services.AddSingleton<IRedisDatabaseSettings, RedisDatabaseSettings>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IUserFollowRepository, UserFollowRepository>();
             services.AddScoped<IBlockedUserRepository, BlockedUserRepository>();
