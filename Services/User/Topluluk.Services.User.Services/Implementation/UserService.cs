@@ -112,7 +112,6 @@ namespace Topluluk.Services.User.Services.Implementation
             dto.FollowingCount = followingCountTask.Result;
             dto.FollowersCount = followersCountTask.Result;
             return await Task.FromResult(Response<GetUserByIdDto>.Success(dto, ResponseStatus.Success));
-
         }
 
 
