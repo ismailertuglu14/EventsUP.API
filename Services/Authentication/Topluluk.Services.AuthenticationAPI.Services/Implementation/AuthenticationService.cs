@@ -39,6 +39,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
         {
             TokenHelper _tokenHelper = new TokenHelper(_configuration);
             UserCredential? user = new();
+            if (userDto.UserName.IsNullOrEmpty() && userDto.Email.IsNullOrEmpty()) throw new Exception("Bad Request");
             if (!userDto.UserName.IsNullOrEmpty())
             {
                 user = await _repository.GetFirstAsync(u => u.UserName == userDto.UserName && u.Provider == userDto.Provider);
@@ -47,44 +48,43 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             {
                 user = await _repository.GetFirstAsync(u => u.Email == userDto.Email && u.Provider == userDto.Provider);
             }
-            if(user != null)
-            {
-                var isPasswordVerified = PasswordFunctions.VerifyPassword(userDto.Password, user.HashedPassword);
-                if(isPasswordVerified)
-                {
-                    // Dead code fix later.b
-                    if (DateTime.Now < user.LockoutEnd)
-                    {
-                        return Response<TokenDto>.Fail($"User locked until {user.LockoutEnd}", ResponseStatus.AccountLocked);
-                    }
-                    TokenDto token = _tokenHelper.CreateAccessToken(user.Id, user.UserName, user.Role, 2);
-                    user.AccessFailedCount = 0;
-                    user.LockoutEnd = DateTime.MinValue;
-                    user.Locked = false;
-                    UpdateRefreshToken(user,token,2);
-                    LoginLog loginLog = new()
-                    {
-                        UserId = user.Id,
-                        IpAdress = ipAdress ?? "",
-                        DeviceId = deviceId ?? ""
-                    };
-                    await _loginLogRepository.InsertAsync(loginLog);
 
-                    return Response<TokenDto>.Success(token, ResponseStatus.Success);
-                }
-                // User found but password wrong.
-                if(user.AccessFailedCount < 15)
+            var isPasswordVerified = PasswordFunctions.VerifyPassword(userDto.Password, user.HashedPassword);
+            if (isPasswordVerified)
+            {
+                // Dead code fix later.b
+                if (DateTime.Now < user.LockoutEnd)
                 {
-                    user.AccessFailedCount += 1;
+                    return Response<TokenDto>.Fail($"User locked until {user.LockoutEnd}", ResponseStatus.AccountLocked);
                 }
-                else
+                TokenDto token = _tokenHelper.CreateAccessToken(user.Id, user.UserName, user.Role, 2);
+                user.AccessFailedCount = 0;
+                user.LockoutEnd = DateTime.MinValue;
+                user.Locked = false;
+                UpdateRefreshToken(user, token, 2);
+                LoginLog loginLog = new()
                 {
-                    user.Locked = true;
-                    user.LockoutEnd = DateTime.Now.AddMinutes(20);
-                    // todo We have to send a mail to user about someone wants to login without permission him/her account.
-                }
-                _repository.Update(user);
+                    UserId = user.Id,
+                    IpAdress = ipAdress ?? "",
+                    DeviceId = deviceId ?? ""
+                };
+                await _loginLogRepository.InsertAsync(loginLog);
+
+                return Response<TokenDto>.Success(token, ResponseStatus.Success);
             }
+            // User found but password wrong.
+            if (user.AccessFailedCount < 15)
+            {
+                user.AccessFailedCount += 1;
+            }
+            else
+            {
+                user.Locked = true;
+                user.LockoutEnd = DateTime.Now.AddMinutes(20);
+                // todo We have to send a mail to user about someone wants to login without permission him/her account.
+            }
+            _repository.Update(user);
+
             return Response<TokenDto>.Fail("Username or password wrong!", ResponseStatus.NotAuthenticated);
         }
 

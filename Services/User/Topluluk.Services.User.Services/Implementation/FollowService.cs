@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
 using RestSharp;
 using Topluluk.Services.User.Data.Interface;
@@ -6,14 +7,16 @@ using Topluluk.Services.User.Model.Dto;
 using Topluluk.Services.User.Model.Dto.Follow;
 using Topluluk.Services.User.Model.Entity;
 using Topluluk.Services.User.Services.Interface;
+using Topluluk.Shared.BaseModels;
 using Topluluk.Shared.Dtos;
 using Topluluk.Shared.Exceptions;
+using static System.Net.Mime.MediaTypeNames;
 using _User = Topluluk.Services.User.Model.Entity.User;
 using ResponseStatus = Topluluk.Shared.Enums.ResponseStatus;
 
 namespace Topluluk.Services.User.Services.Implementation;
 
-public class FollowService : IFollowService
+public class FollowService : BaseService, IFollowService 
 {
 
     private readonly IUserRepository _userRepository;
@@ -21,7 +24,7 @@ public class FollowService : IFollowService
     private readonly IUserFollowRequestRepository _followRequestRepository;
     private readonly IMapper _mapper;
     private readonly RestClient _client;
-    public FollowService(IUserRepository userRepository, IUserFollowRepository followRepository, IUserFollowRequestRepository followRequestRepository, IMapper mapper)
+    public FollowService(IUserRepository userRepository, IUserFollowRepository followRepository, IUserFollowRequestRepository followRequestRepository, IMapper mapper, IHttpContextAccessor httpContextAccessor) : base(httpContextAccessor)
     {
         _userRepository = userRepository;
         _followRepository = followRepository;
@@ -231,36 +234,32 @@ public class FollowService : IFollowService
     }
 
     // Takip edilen kullanıcıları ve o kullanıcıların bilgilerini getireceğiz
-    public async Task<Response<List<FollowingUserDto>>> GetFollowingUsers(string id, string userId, int skip = 0, int take = 10)
+    public async Task<Response<List<FollowingUserDto>>> GetFollowingUsers(string userId, string? query, int skip = 0, int take = 10)
     {
-        try
+        _User user = await _userRepository.GetFirstAsync(u => u.Id == userId);
+        if (user == null)
         {
-            if (userId.IsNullOrEmpty())
-            {
-                return await Task.FromResult(Response<List<FollowingUserDto>>.Fail("Bad Request", ResponseStatus.BadRequest));
-            }
-
-            _User user = await _userRepository.GetFirstAsync(u => u.Id == userId);
-            if (user == null)
-            {
-                return await Task.FromResult(Response<List<FollowingUserDto>>.Fail("", ResponseStatus.NotFound));
-            }
-            // Target Id leri elimde. Bu target id ler ile kullanıcı bilgilerini alıcaz.
-            DatabaseResponse followingsResponse = await _followRepository.GetAllAsync(take, skip, f => f.SourceId == userId);
-            List<string> x = new();
-            foreach (var y in followingsResponse.Data)
-            {
-                x.Add(y.TargetId);
-            }
-            DatabaseResponse followingUsers = await _userRepository.GetAllAsync(take, skip, fu => x.Contains(fu.Id));
-            List<FollowingUserDto> dtos = _mapper.Map<List<_User>, List<FollowingUserDto>>(followingUsers.Data);
-
-            return await Task.FromResult(Response<List<FollowingUserDto>>.Success(dtos, ResponseStatus.Success));
+            return await Task.FromResult(Response<List<FollowingUserDto>>.Fail("", ResponseStatus.NotFound));
         }
-        catch (Exception e)
+        // Target Id leri elimde. Bu target id ler ile kullanıcı bilgilerini alıcaz.
+        List<string>? followingIds = await _followRepository.GetFollowingIds(take, skip, f => f.SourceId == userId);
+        if(followingIds.IsNullOrEmpty())
         {
-            return await Task.FromResult(Response<List<FollowingUserDto>>.Fail($"Some error occurred: {e}", ResponseStatus.InitialError));
+            return await Task.FromResult(Response<List<FollowingUserDto>>.Success(new(), ResponseStatus.Success));
         }
+        List<_User>? followingUsers = new();
+        if (query.IsNullOrEmpty())
+        {
+            followingUsers = _userRepository.GetAllAsync(take, skip, fu => followingIds.Contains(fu.Id)).Result.Data;
+        }
+        else
+        {
+            followingUsers = _userRepository.GetListByExpressionPaginated(skip, take, u => followingIds.Contains(u.Id)  && (u.FullName.ToLower().Contains(query.ToLower()) || u.UserName.Contains(query!.ToLower())));
+        }
+
+        List<FollowingUserDto> dtos = _mapper.Map<List<_User>, List<FollowingUserDto>>(followingUsers);
+
+        return await Task.FromResult(Response<List<FollowingUserDto>>.Success(dtos, ResponseStatus.Success));
     }
 
 
@@ -281,48 +280,5 @@ public class FollowService : IFollowService
         return await Task.FromResult(Response<List<FollowerUserDto>>.Success(followersDto, ResponseStatus.Success));
 
     }
-
-    public async Task<Response<List<FollowingUserDto>?>> SearchInFollowings(string currentUserId, string userId, string text, int skip = 0, int take = 10)
-    {
-        _User? user = await _userRepository.GetFirstAsync(u => u.Id == userId);
-
-        if (user == null)
-        {
-            return Response<List<FollowingUserDto>?>.Fail("User not found", ResponseStatus.NotFound);
-        }
-        var followingIds = await _followRepository.GetFollowingIds(skip, take, f => f.SourceId == userId);
-        if (followingIds is null || followingIds.Count == 0)
-        {
-            return Response<List<FollowingUserDto>?>.Success(new(), ResponseStatus.Success);
-        }
-        var followingUsers =
-            _userRepository.GetListByExpressionPaginated(skip, take, u => followingIds.Contains(u.Id)
-                && (u.FullName.ToLower().Contains(text.ToLower()) || u.UserName.Contains(text.ToLower())));
-        List<FollowingUserDto> followingUserDtos =
-            _mapper.Map<List<_User>, List<FollowingUserDto>>(followingUsers);
-        /*DatabaseResponse response = await _userRepository.GetAllAsync(take, skip, u =>  true
-        && ((u.FirstName.ToLower() + " " + u.LastName.ToLower()).Contains(text.ToLower()) || u.UserName.Contains(text.ToLower())));
-        ;*/
-        return Response<List<FollowingUserDto>?>.Success(followingUserDtos, ResponseStatus.Success);
-    }
-
-    public async Task<Response<List<FollowerUserDto>?>> SearchInFollowers(string currentUserId, string userId, string text, int skip = 0, int take = 10)
-    {
-        _User? user = await _userRepository.GetFirstAsync(u => u.Id == userId);
-        if (user == null)
-        {
-            return Response<List<FollowerUserDto>?>.Fail("User not found", ResponseStatus.NotFound);
-        }
-        var followersIds = await _followRepository.GetFollowerIds(skip, take, f => f.TargetId == userId);
-        if (followersIds is null || followersIds.Count == 0)
-        {
-            return Response<List<FollowerUserDto>?>.Success(new(), ResponseStatus.Success);
-        }
-        var followersDto =
-            _userRepository.GetListByExpressionPaginated(skip, take, u => followersIds.Contains(u.Id)
-                           && (u.FullName.ToLower().Contains(text.ToLower()) || u.UserName.Contains(text.ToLower())));
-        List<FollowerUserDto> followingUserDtos =
-            _mapper.Map<List<_User>, List<FollowerUserDto>>(followersDto);
-        return Response<List<FollowerUserDto>?>.Success(followingUserDtos, ResponseStatus.Success);
-    }
+   
 }
