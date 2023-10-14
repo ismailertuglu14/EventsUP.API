@@ -35,7 +35,7 @@ public interface IRedisRepository
     /// <typeparam name="T">The type of the value to be serialized.</typeparam>
     /// <returns>A task that represents the asynchronous operation. The task result is a boolean indicating whether the serialization was successful.</returns>
     Task<bool> SetValueAsync<T>(string key, T value);
-  
+
     /// <summary>
     /// Asynchronously retrieves an object from the cache using the specified key. If the object is not found in the cache, it returns null.
     /// </summary>
@@ -43,7 +43,7 @@ public interface IRedisRepository
     /// <param name="key">The key under which the object is stored in the cache.</param>
     /// <returns>A Task representing the asynchronous operation that returns the cached object of type T if found; otherwise, it returns null.</returns>
     Task<T> GetOrNullAsync<T>(string key) where T : class;
-   
+
     Task<List<string>> GetListValueAsync(List<string> keys);
 
     /// <summary>
@@ -75,6 +75,4 @@ public interface IRedisRepository
     /// Removes all values from the cache, effectively clearing the entire cache.
     /// </summary>
     public void ClearAll();
-
-
 }

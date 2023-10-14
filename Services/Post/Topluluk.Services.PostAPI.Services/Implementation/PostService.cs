@@ -162,7 +162,7 @@ namespace Topluluk.Services.PostAPI.Services.Implementation
             {
                 return await Task.FromResult(Response<string>.Fail("User not found", ResponseStatus.NotFound));
             }
-
+            
             Post post = _mapper.Map<Post>(postDto);
             DatabaseResponse response = new();
 

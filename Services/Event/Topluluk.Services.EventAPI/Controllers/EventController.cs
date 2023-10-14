@@ -57,12 +57,12 @@ namespace Topluluk.Services.EventAPI.Controllers
         {
             return await _eventService.DeleteCompletelyEvent(this.UserId, id);
         }
+
         [HttpPost("expire")]
         public async Task<Response<string>> EventExpire(string id)
         {
             return await _eventService.ExpireEvent(this.UserId, id);
         }
-
 
         [HttpGet("{id}/attendees")]
         public async Task<Response<List<GetEventAttendeesDto>>> GetAttendees(string id,int skip, int take)

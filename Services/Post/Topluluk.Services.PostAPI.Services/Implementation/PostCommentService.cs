@@ -96,6 +96,7 @@ public class PostCommentService : BaseService, IPostCommentService
         {
             PostComment comment = _mapper.Map<PostComment>(commentDto);
             comment.User = user;
+            comment.ParentCommentId = null;
             await _commentRepository.InsertAsync(comment);
             return Response<NoContent>.Success( ResponseStatus.Success);
         }
