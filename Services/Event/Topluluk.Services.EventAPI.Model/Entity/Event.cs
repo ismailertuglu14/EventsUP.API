@@ -8,7 +8,8 @@ namespace Topluluk.Services.EventAPI.Model.Entity
 		public User User { get; set; }
 		public string Title { get; set; }
 		public string Description { get; set; }
-		public List<string>? Images { get; set; }
+        public string? CoverImage { get; set; }
+        public List<string>? Images { get; set; }
 		public string? CommunityId { get; set; }
 		public bool IsLocationOnline { get; set; }
 		public string? LocationPlace { get; set; }

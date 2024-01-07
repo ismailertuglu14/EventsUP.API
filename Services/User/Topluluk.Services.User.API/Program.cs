@@ -79,11 +79,28 @@ builder.Services.AddAuthentication(options =>
                 Data = null!,
                 StatusCode = Topluluk.Shared.Enums.ResponseStatus.Unauthorized,
                 IsSuccess = false,
-                Errors = new List<string> {"Unauthorized access denied."}
+                Errors = new List<string> { "Unauthorized access denied." }
             };
             var json = JsonConvert.SerializeObject(errorResponse);
             await context.Response.WriteAsync(json);
-        }
+        },
+        OnAuthenticationFailed = async context =>
+        {
+            context.Fail("Unauthorized access denied1.");
+            context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+            context.Response.ContentType = "application/json";
+            var errorResponse = new Topluluk.Shared.Dtos.Response<string>
+            {
+                Data = null!,
+                StatusCode = Topluluk.Shared.Enums.ResponseStatus.Unauthorized,
+                IsSuccess = false,
+                Errors = new List<string> { "Unauthorized access denied2."}
+            };
+            var json = JsonConvert.SerializeObject(errorResponse);
+            await context.Response.WriteAsync(json);
+        },
+        
+        
     };
 });
 builder.Services.AddHttpContextAccessor();

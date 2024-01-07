@@ -36,13 +36,11 @@ namespace Topluluk.Services.PostAPI.Services.Consumer
                 ProfileImage = context.Message.ProfileImage,
             };
 
-            var postupdateResult = await _postRepository.UserUpdated(user);
-            var commentUpdateResult = await _postCommentRepository.UserUpdated(user);
+            await _postRepository.UserUpdated(user);
+            await _postCommentRepository.UserUpdated(user);
             var savedPostUpdateResult = "";
             var postInteractionUpdateResult = "";
-            var commentInteractionRepository = "";
-            if (postupdateResult == false) return;
-            
+            var commentInteractionRepository = "";            
         }
     }
 }

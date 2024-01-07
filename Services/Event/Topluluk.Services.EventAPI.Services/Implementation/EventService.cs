@@ -15,6 +15,7 @@ using _MassTransit = MassTransit;
 using Microsoft.AspNetCore.Http;
 using Topluluk.Shared.Helper;
 using Topluluk.Shared.BaseModels;
+using Topluluk.Services.EventAPI.Model.Enums;
 
 namespace Topluluk.Services.EventAPI.Services.Implementation
 {
@@ -107,7 +108,30 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
                         _event.Images!.AddRange(responseUrls.Data);
                     }
                 }
-                
+                if (dto.CoverImage != null)
+                {
+                    var client = new HttpClient();
+                    var formDataContent = new MultipartFormDataContent();
+
+                        formDataContent.Add(new StreamContent(dto.CoverImage.OpenReadStream())
+                        {
+                            Headers =
+                            {
+                                ContentLength = dto.CoverImage.Length,
+                                ContentType = new MediaTypeHeaderValue(dto.CoverImage.ContentType)
+                            }
+                        }, "files", dto.CoverImage.FileName);
+                    
+                    var responseFiles =
+                        await client.PostAsync(ServiceConstants.API_GATEWAY + "/file/event-images", formDataContent);
+                    if (responseFiles.IsSuccessStatusCode)
+                    {
+                        string responseString = await responseFiles.Content.ReadAsStringAsync();
+
+                        responseUrls = JsonConvert.DeserializeObject<Response<List<string>>>(responseString);
+                        _event.CoverImage = responseUrls.Data[0];
+                    }
+                }
                 if (_event.IsLocationOnline)
                 {
                     _event.LocationURL = dto.Location;
@@ -210,15 +234,15 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
             }
         }
 
-        public async Task<Response<string>> JoinEvent(string userId, string eventId)
+        public async Task<Response<NoContent>> JoinEvent(string userId, string eventId)
         {
             try
             {
                 Event _event = await _eventRepository.GetFirstAsync(e => e.Id == eventId);
                 if (_event == null) 
-                    return Response<string>.Fail("User Not Found",ResponseStatus.NotFound);
-                if(_event.IsExpired)
-                    return Response<string>.Fail("You can not join because event expired", ResponseStatus.Failed);
+                    return Response<NoContent>.Fail("User Not Found",ResponseStatus.NotFound);
+                if(_event.IsExpired) // TODO: Create event expired exception
+                    return Response<NoContent>.Fail("You can not join because event expired", ResponseStatus.Failed);
                
                 var attendeesCountTask = _attendeesRepository.Count(e => e.EventId == _event.Id);
                 var isParticipiantTask = _attendeesRepository.AnyAsync(e => e.IsDeleted == false && e.EventId == _event.Id && e.User.Id == userId);
@@ -226,12 +250,12 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
                 
                 if (_event.IsLimited && attendeesCountTask.Result >= _event.ParticipiantLimit)
                 {
-                    return Response<string>.Fail("Event is full now!", ResponseStatus.BadRequest);
+                    return Response<NoContent>.Fail("Event is full now!", ResponseStatus.BadRequest);
                 }
 
                 if (isParticipiantTask.Result)
                 {
-                    return Response<string>.Success("Already joined", ResponseStatus.Success);
+                    return Response<NoContent>.Success(ResponseStatus.Success);
                 }
                 User? user = await HttpRequestHelper.GetUser(Token);
                 if (user == null) throw new UnauthorizedAccessException();
@@ -241,14 +265,11 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
                     EventId = eventId
                 };
                 await _attendeesRepository.InsertAsync(attendee);
-
-                return Response<string>.Success("Joined", ResponseStatus.Success);
-
+                return Response<NoContent>.Success(ResponseStatus.Success);
             }
             catch (Exception e)
             {
-                
-                return await Task.FromResult(Response<string>.Fail($"Some error occured: {e}", ResponseStatus.InitialError));
+                return Response<NoContent>.Fail($"Some error occured: {e}", ResponseStatus.InitialError);
             }
         }
 
@@ -381,10 +402,58 @@ namespace Topluluk.Services.EventAPI.Services.Implementation
             }
         }
 
-        public Task<Response<string>> GetEventSuggestions()
+        public async Task<Response<List<EventGetSuggestionDto>>> GetEventSuggestions(EventFilter filter, int skip = 0, int take = 10)
         {
-            throw new NotImplementedException();
+
+            List<Event> @events = new();
+            
+            switch (filter)
+            {
+                case EventFilter.All:
+                    @events = _eventRepository.GetListByExpressionPaginated(skip, take, e => !e.IsDeleted);
+                    break;
+                case EventFilter.Upcoming:
+                    @events = _eventRepository.GetListByExpressionPaginated(skip, take, e => e.StartDate > DateTime.Now);
+                    break;
+                case EventFilter.Latest:
+                    @events = _eventRepository.GetListByExpressionPaginated(skip, take, e => e.EndDate > DateTime.Now &&
+                        e.CreatedAt > DateTime.Now.AddDays(-3)
+                    );
+                    break;
+            }
+
+            if (events is null) return new();
+            string userId = this.GetCurrentUserAsync().Result.Id;
+            var followingUsersRequest = new RestRequest(ServiceConstants.API_GATEWAY + "/user/user-followings").AddQueryParameter("id", userId);
+            var followingUsersResponse = await _client.ExecuteGetAsync<Response<List<string>>>(followingUsersRequest);
+            List<EventGetSuggestionDto> dtos = new();
+
+            foreach (var @event in events)
+            {
+                var start = @event.StartDate?.ToString("dd MMMM", new System.Globalization.CultureInfo("en-US"));
+                var end = @event.EndDate?.ToString("dd MMMM", new System.Globalization.CultureInfo("en-US"));
+                string date = $"{start} - {end}";
+                List<string>? mutualFriendImages = await _attendeesRepository.JoinedMutualFriendImages(followingUsersResponse.Data.Data, @event.Id );
+                dtos.Add(new()
+                {
+                    Id = @event.Id,
+                    Name = @event.Title,
+                    Description = @event.Description,
+                    Image = @event.CoverImage,
+                    Date = date,
+                    MutualFriendImages = mutualFriendImages,
+                    IsOnline = @event.IsLocationOnline,
+                    Address = @event.IsLocationOnline ? @event.LocationURL : @event.LocationPlace,
+                    IsPaid = @event.IsPaid,
+                    Price = @event.Price,
+                    IsParticipantLimited = @event.IsLimited,
+                    CurrentParticipants = 0,
+                    TotalParticipants = 0,
+                });
+            }
+            return Response<List<EventGetSuggestionDto>>.Success(dtos,ResponseStatus.Success);
         }
+
 
         public async Task<Response<List<EventDto>>> GetUserEvents(string id, string token)
         {

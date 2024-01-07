@@ -13,7 +13,12 @@ namespace Topluluk.Services.FileAPI.Services.Implementation
         private readonly BlobServiceClient _blobServiceClient;
         public AzureStorage(IConfiguration configuration)
 		{
-            _blobServiceClient = new BlobServiceClient(connectionString: configuration["Storage:Azure"] ?? throw new ArgumentNullException());
+            string? connectionString = configuration["Storage:Azure"];
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new ArgumentException("Azure storage connection string can not be null.", nameof(configuration));
+            }
+            _blobServiceClient = new BlobServiceClient(connectionString);
         }
         public async Task<List<string>> UploadAsync(string containerName, IFormFileCollection formFileCollection)
         {

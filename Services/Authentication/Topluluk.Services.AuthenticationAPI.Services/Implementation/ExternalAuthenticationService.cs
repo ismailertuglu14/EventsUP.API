@@ -42,28 +42,21 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             {
                 Audience = new List<string> { _configuration["Google:Client_Id"] ?? throw new ArgumentNullException() }
             };
-
-            var payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken, settings);
-
-            var userCredentials = await _repository.GetFirstAsync(x => x.Email == payload.Email);
-
+            GoogleJsonWebSignature.Payload? payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken, settings);
+            UserCredential? userCredentials = await _repository.GetFirstAsync(x => x.Email == payload.Email && x.Provider == Shared.Enums.LoginProvider.Google);    
             TokenHelper tokenHelper = new TokenHelper(_configuration);
             TokenDto token = new();
-
             if (userCredentials != null)
             {
                 token = tokenHelper.CreateAccessToken(userCredentials.Id, userCredentials.UserName, userCredentials.Role);
                 return Response<TokenDto>.Success(token, ResponseStatus.Success);
             }
-
             string newUserName = payload.Name.Replace(" ", "");
             string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
 
             if (await _repository.GetFirstAsync(x => x.UserName == newUserName) != null)
-            {
                 newUserName += timestamp;
-            }
-
+            
             UserCredential credential = new()
             {
                 Email = payload.Email,
@@ -87,11 +80,10 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
 
             if (!response.IsSuccessful || response.Data == null)
                 throw new Exception("Kullanıcı insert edilirken beklenmeyen bir hata oluştu.");
-
             await _repository.InsertAsync(credential);
             token = tokenHelper.CreateAccessToken(credential.Id, newUserName, credential.Role);
             SendRegisteredMail sendRegisteredMail = new(_endpointProvider);
-            //sendRegisteredMail.send(payload.GivenName, payload.FamilyName, payload.Email);
+            sendRegisteredMail.send(payload.GivenName + " " + payload.FamilyName, payload.Email);
             return Response<TokenDto>.Success(token ,ResponseStatus.Success);
         }
 

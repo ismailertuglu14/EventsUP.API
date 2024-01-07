@@ -1,0 +1,86 @@
+﻿{
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:5280"
+  },
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/authentication/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "eventsup_authentication_api",
+          "Port": 7233
+        }
+      ],
+      "UpstreamPathTemplate": "/api/authentication/{everything}",
+      "UpstreamHttpMethod": [ "Get", "Post", "Put" ]
+    },
+    {
+      "DownstreamPathTemplate": "/community/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "eventsup_community_api",
+          "Port": 5028
+
+        }
+      ],
+      "UpstreamPathTemplate": "/api/community/{everything}",
+      "UpstreamHttpMethod": [ "Get", "Post", "Put" ]
+    },
+    {
+      "DownstreamPathTemplate": "/event/{everything}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": "7050"
+
+        }
+      ],
+      "UpstreamPathTemplate": "/api/event/{everything}",
+      "UpstreamHttpMethod": [ "Get", "Post", "Put" ]
+    },
+    {
+      "DownstreamPathTemplate": "/post/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "eventsup_post_api",
+          "Port": 5131
+
+        }
+      ],
+      "UpstreamPathTemplate": "/api/post/{everything}",
+      "UpstreamHttpMethod": [ "Get", "Post", "Put" ]
+    },
+    {
+      "DownstreamPathTemplate": "/user/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "eventsup_user_api",
+          "Port": 5031
+
+        }
+      ],
+      "UpstreamPathTemplate": "/api/user/{everything}",
+      "UpstreamHttpMethod": [ "Get", "Post", "Put" ]
+    },
+    {
+      "DownstreamPathTemplate": "/file/{everything}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": "7165"
+
+        }
+      ],
+      "UpstreamPathTemplate": "/api/file/{everything}",
+      "UpstreamHttpMethod": [ "Get", "Post", "Put" ]
+    }
+
+  ]
+}
+

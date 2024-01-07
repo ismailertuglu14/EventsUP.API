@@ -86,7 +86,7 @@ public class PostCommentService : BaseService, IPostCommentService
         return Response<List<CommentGetDto>>.Success(comments,ResponseStatus.Success);
     }
 
-    public async Task<Response<NoContent>> CreateComment(CommentCreateDto commentDto)
+    public async Task<Response<CommentGetDto>> CreateComment(CommentCreateDto commentDto)
     {
         User? user = await GetCurrentUserAsync();
         if (user == null)
@@ -96,11 +96,12 @@ public class PostCommentService : BaseService, IPostCommentService
         {
             PostComment comment = _mapper.Map<PostComment>(commentDto);
             comment.User = user;
-            comment.ParentCommentId = null;
+            comment.ParentCommentId = comment.ParentCommentId;
             await _commentRepository.InsertAsync(comment);
-            return Response<NoContent>.Success( ResponseStatus.Success);
+            return Response<CommentGetDto>.Success(_mapper.Map<CommentGetDto>(comment),ResponseStatus.Success);
         }
-        return Response<NoContent>.Fail("Post not found", ResponseStatus.NotFound);
+
+        return Response<CommentGetDto>.Fail("Post not found", ResponseStatus.NotFound);
     }
 
     public async Task<Response<NoContent>> UpdateComment(string userId, CommentUpdateDto commentDto)

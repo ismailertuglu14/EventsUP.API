@@ -73,6 +73,25 @@ namespace Topluluk.Services.AuthenticationAPI.Controllers
 
         // @@@@@@@@@@@ HTTP Requests @@@@@@@@@@@@@@@
 
+        [HttpGet("ready")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        public async Task<IActionResult> Ready()
+        {
+            return Ok(true);
+        }
+
+        [HttpGet("commit")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        public async Task<IActionResult> Commit()
+        {
+            return Ok(true);
+        }
+        [HttpGet("discard")]
+        public async Task<IActionResult> Discard()
+        {
+            return Ok("Discarded");
+        }
+
         /// <summary>
         /// When the method of deleting the account in the user service is run
         /// a request is sent here to delete the Credentials.

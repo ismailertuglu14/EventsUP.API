@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Topluluk.Services.EventAPI.Model.Dto;
+using Topluluk.Services.EventAPI.Model.Enums;
 using Topluluk.Services.EventAPI.Services.Interface;
 using Topluluk.Shared.BaseModels;
 using Topluluk.Shared.Dtos;
@@ -21,6 +22,12 @@ namespace Topluluk.Services.EventAPI.Controllers
         {
             return await _eventService.GetEventById(this.UserId, this.Token, id);
         }
+        [HttpGet("suggestions")]
+        public async Task<Response<List<EventGetSuggestionDto>>> GetEventSuggestions(EventFilter filter)
+        {
+            return await _eventService.GetEventSuggestions(filter);
+
+        }
         
         [HttpPost("create")]
         public async Task<Response<string>> CreateEvent([FromForm]CreateEventDto dto)
@@ -35,7 +42,7 @@ namespace Topluluk.Services.EventAPI.Controllers
         }
 
         [HttpPost("join/{id}")]
-        public async Task<Response<string>> JoinEvent(string id)
+        public async Task<Response<NoContent>> JoinEvent(string id)
         {
             return await _eventService.JoinEvent(this.UserId , id);
         }

@@ -9,9 +9,12 @@ using Topluluk.Services.User.Services.Interface;
 using Topluluk.Shared.Constants;
 using Topluluk.Shared.Dtos;
 using Topluluk.Shared.Exceptions;
+using Topluluk.Shared.Messages.User;
 using _User = Topluluk.Services.User.Model.Entity.User;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using ResponseStatus = Topluluk.Shared.Enums.ResponseStatus;
+using _MassTransit = MassTransit;
+
 namespace Topluluk.Services.User.Services.Implementation;
 
 public class ImageService : IImageService
@@ -19,12 +22,14 @@ public class ImageService : IImageService
     private readonly IUserRepository _userRepository;
     private readonly RestClient _client;
     private readonly IRedisRepository _redisRepository;
+    private readonly _MassTransit.IPublishEndpoint _publishEndpoint;
 
-    public ImageService(IUserRepository userRepository, IRedisRepository redisRepository)
+    public ImageService(_MassTransit.IPublishEndpoint publishEndpoint, IUserRepository userRepository, IRedisRepository redisRepository)
     {
         _userRepository = userRepository;
         _redisRepository = redisRepository;
         _client = new RestClient();
+        _publishEndpoint = publishEndpoint;
     }
 
 
@@ -161,9 +166,18 @@ public class ImageService : IImageService
 
             user.ProfileImage = imageUrl;
             _userRepository.Update(user);
+            UserUpdatedEvent userUpdatedEvent = new()
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                UserName = user.UserName,
+                ProfileImage = imageUrl,
+                Gender = user.Gender,
+            };
             await _redisRepository.SetValueAsync($"user_{user.Id}",user);
-            return Response<string>.Success($"Image changed with {imageUrl}",
-                ResponseStatus.Success);
+            await _publishEndpoint.Publish<UserUpdatedEvent>(userUpdatedEvent);
+          
+            return Response<string>.Success($"Image changed with {imageUrl}", ResponseStatus.Success);
         }
     }
 

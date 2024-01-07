@@ -13,7 +13,7 @@ public interface IFollowService
     Task<Response<NoContent>> RemoveFollowRequest(string userId, string targetId);
     Task<Response<string>> RemoveUserFromFollowers(string userId, UserFollowDto userInfo);
     Task<Response<List<FollowingUserDto>>> GetFollowingUsers( string userId, string? query, int skip = 0, int take = 10);
-    Task<Response<List<FollowerUserDto>>> GetFollowerUsers(string id, string userId, int skip = 0, int take = 10);
+    Task<Response<List<FollowerUserDto>>> GetFollowerUsers(string userId, string? query, int skip = 0, int take = 10);
     // Use for show Incoming follow requests
     Task<Response<List<UserFollowRequestDto>>> GetFollowerRequests(string id, string userId, int skip = 0, int take = 10);
     Task<Response<List<UserSuggestionsDto>>> GetUserFollowSuggestions(string userId);

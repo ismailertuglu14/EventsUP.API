@@ -105,29 +105,38 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topluluk.Services.EventAPI.
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Feed", "Feed", "{9A425FB0-4D5E-4D79-9D55-3848D055DFB9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topluluk.Services.FeedAPI", "Services\Feed\Topluluk.Services.FeedAPI\Topluluk.Services.FeedAPI.csproj", "{0F7F2865-91AA-4F97-83E7-AFE52B07E107}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topluluk.Services.FeedAPI", "Services\Feed\Topluluk.Services.FeedAPI\Topluluk.Services.FeedAPI.csproj", "{0F7F2865-91AA-4F97-83E7-AFE52B07E107}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topluluk.Services.FeedAPI.Data", "Services\Feed\Topluluk.Services.FeedAPI.Data\Topluluk.Services.FeedAPI.Data.csproj", "{5AB5D64B-7450-4ADB-BE11-8A82C41C2D9E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topluluk.Services.FeedAPI.Data", "Services\Feed\Topluluk.Services.FeedAPI.Data\Topluluk.Services.FeedAPI.Data.csproj", "{5AB5D64B-7450-4ADB-BE11-8A82C41C2D9E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topluluk.Services.FeedAPI.Model", "Services\Feed\Topluluk.Services.FeedAPI.Model\Topluluk.Services.FeedAPI.Model.csproj", "{18F858D8-1122-416F-976F-F7D71C79118F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topluluk.Services.FeedAPI.Model", "Services\Feed\Topluluk.Services.FeedAPI.Model\Topluluk.Services.FeedAPI.Model.csproj", "{18F858D8-1122-416F-976F-F7D71C79118F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topluluk.Services.FeedAPI.Services", "Services\Feed\Topluluk.Services.FeedAPI.Services\Topluluk.Services.FeedAPI.Services.csproj", "{6A1F8D85-43A1-405E-A6AE-E7766081AEC8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topluluk.Services.FeedAPI.Services", "Services\Feed\Topluluk.Services.FeedAPI.Services\Topluluk.Services.FeedAPI.Services.csproj", "{6A1F8D85-43A1-405E-A6AE-E7766081AEC8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Chat", "Chat", "{2B75DDA5-FBCE-4E87-B15D-831D116928C3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topluluk.Services.MailAPI.Services", "Services\Mail\Topluluk.Services.MailAPI.Services\Topluluk.Services.MailAPI.Services.csproj", "{4636CB2E-9718-4646-9EC1-3F84A7EA5348}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topluluk.Services.MailAPI.Services", "Services\Mail\Topluluk.Services.MailAPI.Services\Topluluk.Services.MailAPI.Services.csproj", "{4636CB2E-9718-4646-9EC1-3F84A7EA5348}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topluluk.Services.MailAPI.Model", "Services\Mail\Topluluk.Services.MailAPI.Model\Topluluk.Services.MailAPI.Model.csproj", "{22C70A63-4199-4772-B5C7-AEF2FC79672F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topluluk.Services.MailAPI.Model", "Services\Mail\Topluluk.Services.MailAPI.Model\Topluluk.Services.MailAPI.Model.csproj", "{22C70A63-4199-4772-B5C7-AEF2FC79672F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Update", "Update", "{7C50F559-15D6-4D96-90DE-3FDEE534050F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topluluk.Services.UpdateAPI", "Services\Update\Topluluk.Services.UpdateAPI\Topluluk.Services.UpdateAPI.csproj", "{670C1651-F2E0-49C3-8A4B-E82DD68D698A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topluluk.Services.UpdateAPI", "Services\Update\Topluluk.Services.UpdateAPI\Topluluk.Services.UpdateAPI.csproj", "{670C1651-F2E0-49C3-8A4B-E82DD68D698A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topluluk.Services.UpdateAPI.Data", "Services\Update\Topluluk.Services.UpdateAPI.Data\Topluluk.Services.UpdateAPI.Data.csproj", "{58F284C9-539B-4DC9-BA32-0B592F3771B2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topluluk.Services.UpdateAPI.Data", "Services\Update\Topluluk.Services.UpdateAPI.Data\Topluluk.Services.UpdateAPI.Data.csproj", "{58F284C9-539B-4DC9-BA32-0B592F3771B2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topluluk.Services.UpdateAPI.Model", "Services\Update\Topluluk.Services.UpdateAPI.Model\Topluluk.Services.UpdateAPI.Model.csproj", "{C8424248-6B61-4047-94F6-AFBD2B4352F4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topluluk.Services.UpdateAPI.Model", "Services\Update\Topluluk.Services.UpdateAPI.Model\Topluluk.Services.UpdateAPI.Model.csproj", "{C8424248-6B61-4047-94F6-AFBD2B4352F4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topluluk.Services.UpdateAPI.Services", "Services\Update\Topluluk.Services.UpdateAPI.Services\Topluluk.Services.UpdateAPI.Services.csproj", "{19D63953-9667-4A1F-AB6C-D4D25B6D19F3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topluluk.Services.UpdateAPI.Services", "Services\Update\Topluluk.Services.UpdateAPI.Services\Topluluk.Services.UpdateAPI.Services.csproj", "{19D63953-9667-4A1F-AB6C-D4D25B6D19F3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BF3D07D9-ECAC-4C25-8357-20770D03E46B}"
+	ProjectSection(SolutionItems) = preProject
+		docker-compose.yml = docker-compose.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Coordinator", "Coordinator", "{DE1A5EBB-C6E6-46F7-B802-8461DB35D880}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topluluk.Services.Coordinator", "Services\Coordinator\Topluluk.Services.Coordinator\Topluluk.Services.Coordinator.csproj", "{81EE7E3D-257D-497B-91B4-582EA246B309}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -323,6 +332,10 @@ Global
 		{19D63953-9667-4A1F-AB6C-D4D25B6D19F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19D63953-9667-4A1F-AB6C-D4D25B6D19F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19D63953-9667-4A1F-AB6C-D4D25B6D19F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81EE7E3D-257D-497B-91B4-582EA246B309}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81EE7E3D-257D-497B-91B4-582EA246B309}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81EE7E3D-257D-497B-91B4-582EA246B309}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81EE7E3D-257D-497B-91B4-582EA246B309}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -388,6 +401,8 @@ Global
 		{58F284C9-539B-4DC9-BA32-0B592F3771B2} = {7C50F559-15D6-4D96-90DE-3FDEE534050F}
 		{C8424248-6B61-4047-94F6-AFBD2B4352F4} = {7C50F559-15D6-4D96-90DE-3FDEE534050F}
 		{19D63953-9667-4A1F-AB6C-D4D25B6D19F3} = {7C50F559-15D6-4D96-90DE-3FDEE534050F}
+		{DE1A5EBB-C6E6-46F7-B802-8461DB35D880} = {B2E286F5-5793-4097-BB38-F9E049159374}
+		{81EE7E3D-257D-497B-91B4-582EA246B309} = {DE1A5EBB-C6E6-46F7-B802-8461DB35D880}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {10EA4274-58F2-4046-97AB-649E4E28F089}
