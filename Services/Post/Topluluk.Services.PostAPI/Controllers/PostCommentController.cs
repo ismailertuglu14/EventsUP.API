@@ -39,7 +39,7 @@ public class PostCommentController : BaseController
     }
 
     [HttpPost("Comment")]
-    public async Task<Response<NoContent>> Comment(CommentCreateDto commentDto)
+    public async Task<Response<CommentGetDto>> Comment(CommentCreateDto commentDto)
     {
         commentDto.UserId = this.UserId;
         return await _commentService.CreateComment(commentDto);

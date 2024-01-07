@@ -241,8 +241,8 @@ public class FollowService : BaseService, IFollowService
         {
             return await Task.FromResult(Response<List<FollowingUserDto>>.Fail("", ResponseStatus.NotFound));
         }
-        // Target Id leri elimde. Bu target id ler ile kullanıcı bilgilerini alıcaz.
-        List<string>? followingIds = await _followRepository.GetFollowingIds(take, skip, f => f.SourceId == userId);
+
+        List<string>? followingIds = await _followRepository.GetFollowingIds(skip, take, f => f.SourceId == userId);
         if(followingIds.IsNullOrEmpty())
         {
             return await Task.FromResult(Response<List<FollowingUserDto>>.Success(new(), ResponseStatus.Success));
@@ -263,7 +263,7 @@ public class FollowService : BaseService, IFollowService
     }
 
 
-    public async Task<Response<List<FollowerUserDto>>> GetFollowerUsers(string currentUserId, string userId, int skip = 0, int take = 10)
+    public async Task<Response<List<FollowerUserDto>>> GetFollowerUsers(string userId, string? query, int skip = 0, int take = 10)
     {
         _User? user = await _userRepository.GetFirstAsync(u => u.Id == userId);
 
@@ -273,8 +273,15 @@ public class FollowService : BaseService, IFollowService
         }
 
         List<UserFollow> followers = _followRepository.GetListByExpressionPaginated(skip, take, f => f.TargetId == userId);
-
-        List<_User> users = _userRepository.GetListByExpressionPaginated(skip, take, u => followers.Any(f => f.SourceId == u.Id));
+        List<_User> users = new();
+        if (query.IsNullOrEmpty())
+        {
+            users = _userRepository.GetListByExpressionPaginated(skip, take, u => followers.Any(f => f.SourceId == u.Id));
+        }
+        else
+        {
+            users = _userRepository.GetListByExpressionPaginated(skip, take, u => followers.Any(f => f.SourceId == u.Id) && (u.FullName.ToLower().Contains(query!.ToLower()) || u.UserName.Contains(query!.ToLower())));
+        }
         List<FollowerUserDto> followersDto = _mapper.Map<List<_User>, List<FollowerUserDto>>(users);
 
         return await Task.FromResult(Response<List<FollowerUserDto>>.Success(followersDto, ResponseStatus.Success));

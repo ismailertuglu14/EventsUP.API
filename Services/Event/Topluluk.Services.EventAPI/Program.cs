@@ -6,6 +6,7 @@ using Topluluk.Services.EventAPI.Model.Mapper;
 using Topluluk.Services.EventAPI.Services.Core;
 using MassTransit;
 using Topluluk.Shared.Middleware;
+using Topluluk.Services.EventAPI.Services.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,17 +50,25 @@ builder.Services.AddAuthentication(options =>
 
     };
 });
+IConfiguration configuration = builder.Configuration;
+
 builder.Services.AddMassTransit(x =>
 {
+    x.AddConsumer<UserUpdatedConsumer>();
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host("localhost","/", host =>
+        cfg.Host(new Uri(configuration.GetSection("RabbitMQ:Host").Value), host =>
         {
-            host.Username("guest");
-            host.Password("guest");
+            host.Username(configuration.GetSection("RabbitMQ:Username").Value);
+            host.Password(configuration.GetSection("RabbitMQ:Password").Value);
+        });
+        cfg.ReceiveEndpoint("user-updated", e =>
+        {
+            e.ConfigureConsumer<UserUpdatedConsumer>(context);
         });
     });
 });
+
 builder.Services.AddMassTransitHostedService();
 
 var app = builder.Build();

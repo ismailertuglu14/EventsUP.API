@@ -1,0 +1,94 @@
+version: '3.4'
+services:
+  api_gateway:
+    container_name: api_gateway
+    image: eventsupapi.azurecr.io/eventsup_api_gateway
+    build:
+      context: .
+      dockerfile: Gateways/Topluluk.Api.Gateways/Dockerfile
+    ports:
+      - 5280:5280
+    depends_on:
+      - authentication_api
+      - user_api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5280
+      - ServiceConfig_serviceName=api_gateway 
+    networks:
+      - micro_net
+      - int_net_api1
+
+
+  authentication_api:
+    container_name: eventsup_authentication_api
+    image: eventsupapi.azurecr.io/eventsup_authentication_api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:7233
+      - ServiceConfig_serviceName=eventsup_authentication_api
+    build:
+      context: .
+      dockerfile: Services/Authentication/Topluluk.Services.AuthenticationAPI/Dockerfile
+    ports:
+      - 7233:7233
+    networks:
+      - int_net_api1
+      - micro_net 
+
+  user_api:
+    container_name: eventsup_user_api
+    image: eventsupapi.azurecr.io/eventsup_user_api
+    build:
+      context: .
+      dockerfile: Services/User/Topluluk.Services.User.API/Dockerfile
+    ports:
+      - 5031:5031
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5031
+      - ServiceConfig_serviceName=eventsup_user_api   
+    networks:
+      - int_net_api1
+      - micro_net 
+  community_api:
+    container_name: eventsup_community_api
+    image: eventsupapi.azurecr.io/eventsup_community_api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5028
+      - ServiceConfig_serviceName=eventsup_community_api
+    build:
+      context: .
+      dockerfile: Services/Community/Topluluk.Services.CommunityAPI/Dockerfile
+    ports:
+      - 5028:5028
+    networks:
+      - int_net_api1
+      - micro_net 
+  post_api:
+    container_name: eventsup_post_api
+    image: eventsupapi.azurecr.io/eventsup_post_api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5131
+      - ServiceConfig_serviceName=eventsup_post_api
+    build:
+      context: .
+      dockerfile: Services/Post/Topluluk.Services.PostAPI/Dockerfile
+    ports:
+      - 5131:5131
+    networks:
+      - int_net_api1
+      - micro_net 
+
+
+
+
+
+networks:
+  micro_net:
+    driver: bridge
+  int_net_api1:
+    driver: overlay
+    internal: true

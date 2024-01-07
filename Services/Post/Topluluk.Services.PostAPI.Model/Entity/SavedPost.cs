@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,7 @@ namespace Topluluk.Services.PostAPI.Model.Entity
 {
     public class SavedPost : AbstractEntity
     {
+        [BsonRepresentation(MongoDB.Bson.BsonType.ObjectId)]
         public string PostId { get; set; }
         public User User { get; set; }
     }

@@ -1,10 +1,12 @@
-﻿using System;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using System;
 using Topluluk.Shared.Dtos;
 
 namespace Topluluk.Services.PostAPI.Model.Dto
 {
 	public class CommentGetDto
 	{
+		[BsonRepresentation(MongoDB.Bson.BsonType.ObjectId)]
 		public string Id { get; set; }
         public User User { get; set; }
         public string Message { get; set; }
