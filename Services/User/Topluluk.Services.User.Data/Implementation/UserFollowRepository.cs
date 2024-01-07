@@ -1,12 +1,8 @@
-using DBHelper.Connection;
 using DBHelper.Repository.Mongo;
-using MongoDB.Driver.Core.Connections;
 using MongoDB.Driver;
 using System.Linq.Expressions;
 using Topluluk.Services.User.Data.Interface;
 using Topluluk.Services.User.Model.Entity;
-using Topluluk.Shared.Dtos;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Topluluk.Services.User.Data.Implementation;
 

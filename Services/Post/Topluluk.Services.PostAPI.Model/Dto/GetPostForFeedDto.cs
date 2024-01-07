@@ -1,4 +1,5 @@
-﻿using Topluluk.Services.PostAPI.Model.Entity;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using Topluluk.Services.PostAPI.Model.Entity;
 using Topluluk.Shared.Dtos;
 using Topluluk.Shared.Enums;
 
@@ -6,6 +7,8 @@ namespace Topluluk.Services.PostAPI.Model.Dto;
 
 public class GetPostForFeedDto
 {
+    [BsonId]
+    [BsonRepresentation(MongoDB.Bson.BsonType.ObjectId)]
     public string Id { get; set; }
     public User User { get; set; }
     public DateTime CreatedAt { get; set; }

@@ -42,7 +42,7 @@ public class MailService : IMailService
         }
         catch (Exception e)
         {
-
+            throw new Exception(e.Message);
         }
     }
 
@@ -66,7 +66,7 @@ public class MailService : IMailService
         }
         catch (Exception e)
         {
-
+            throw new Exception(e.Message);
         }
     }
 

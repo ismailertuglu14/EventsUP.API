@@ -11,21 +11,22 @@ using Topluluk.Services.CommunityAPI.Model.Dto;
 using Topluluk.Services.CommunityAPI.Model.Dto.Http;
 using Topluluk.Services.CommunityAPI.Model.Entity;
 using Topluluk.Services.CommunityAPI.Services.Interface;
+using Topluluk.Shared.BaseModels;
 using Topluluk.Shared.Constants;
 using Topluluk.Shared.Dtos;
+using Topluluk.Shared.Exceptions;
 using Topluluk.Shared.Helper;
 using ResponseStatus = Topluluk.Shared.Enums.ResponseStatus;
 
 namespace Topluluk.Services.CommunityAPI.Services.Implementation
 {
-    public class CommunityService : ICommunityService
+    public class CommunityService : BaseService, ICommunityService
     {
         private readonly ICommunityRepository _communityRepository;
         private readonly IMapper _mapper;
         private readonly ICommunityParticipiantRepository _participiantRepository;
         private readonly RestClient _client;
-
-        public CommunityService(ICommunityRepository communityRepository, IMapper mapper, ICommunityParticipiantRepository participiantRepository)
+        public CommunityService(ICommunityRepository communityRepository, IMapper mapper, ICommunityParticipiantRepository participiantRepository, IHttpContextAccessor httpContextAccessor) : base(httpContextAccessor)
         {
             _communityRepository = communityRepository;
             _participiantRepository = participiantRepository;
@@ -67,12 +68,11 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
             }
         }
 
-
         public async Task<Response<int>> GetUserParticipiantCommunitiesCount(string userId)
         {
             try
             {
-                int count = await _participiantRepository.Count(cp => !cp.IsDeleted && cp.UserId == userId);
+                int count = await _participiantRepository.Count(cp => !cp.IsDeleted && cp.User.Id == userId);
                 return Response<int>.Success(count, ResponseStatus.Success);
             }
             catch (Exception e)
@@ -100,34 +100,27 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                 return await Task.FromResult(Response<CommunityGetByIdDto>.Fail("Not Visible public", ResponseStatus.NotFound));
             }
 
-            var userRequest = new RestRequest(ServiceConstants.API_GATEWAY + "/user/GetUserById").AddQueryParameter("userId", community.AdminId).AddHeader("Authorization",token);
-            var userResponseTask =  _client.ExecuteGetAsync<Response<UserDto>>(userRequest);
             var participiantCountTask = _participiantRepository.Count(p => !p.IsDeleted && p.CommunityId == community.Id && p.Status == ParticipiantStatus.ACCEPTED);
-            var IsParticipiantTask =  _participiantRepository.AnyAsync(p => !p.IsDeleted && p.CommunityId == communityId && p.UserId == userId && p.Status == ParticipiantStatus.ACCEPTED);
+            var IsParticipiantTask =  _participiantRepository.AnyAsync(p => !p.IsDeleted && p.CommunityId == communityId && p.User.Id == userId && p.Status == ParticipiantStatus.ACCEPTED);
 
-            await Task.WhenAll(userResponseTask, participiantCountTask, IsParticipiantTask);
-            var user = userResponseTask.Result.Data.Data;
+            await Task.WhenAll( participiantCountTask, IsParticipiantTask);
             _community.Id = communityId;
-            _community.AdminId = user.Id;
-            _community.AdminName = user.FullName;
-            _community.AdminImage = user.ProfileImage;
-            _community.AdminGender = user.Gender;
+            _community.Admin = community.Admin;
             _community.Location = community.Location ?? "";
             _community.Title = community.Title;
             _community.Description = community.Description;
-            _community.IsOwner = community.AdminId == userId ? true : false;
+            _community.IsOwner = community.Admin.Id == userId ? true : false;
             _community.CoverImage = community.CoverImage;
             _community.BannerImage = community.BannerImage;
             _community.ParticipiantsCount = participiantCountTask.Result;
             _community.IsParticipiant = IsParticipiantTask.Result;
-
             return await Task.FromResult(Response<CommunityGetByIdDto>.Success(_community, ResponseStatus.Success));
         }
 
-
-
         public async Task<Response<string>> Create(string userId,string token, CommunityCreateDto communityInfo)
         {
+            User? currentUser = await GetCurrentUserAsync();
+            if (currentUser == null) throw new UnauthorizedAccessException();
 
             string slug = StringToSlugConvert(communityInfo.Title);
             bool isSluqUnique = false;
@@ -148,8 +141,7 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
 
             Community community = _mapper.Map<Community>(communityInfo);
             community.Slug = slug;
-            community.AdminId = userId;
-
+            community.Admin = currentUser;
             if (communityInfo.CoverImage != null)
             {
                 byte[] imageBytes;
@@ -212,9 +204,13 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
             }
 
             DatabaseResponse response = await _communityRepository.InsertAsync(community);
+            
+            User? user = await HttpRequestHelper.GetUser(Token);
+            if (user == null) throw new UnauthorizedAccessException();
+
             CommunityParticipiant participiant = new CommunityParticipiant()
             {
-                UserId = userId,
+                User= user,
                 CommunityId = response.Data,
                 Status = ParticipiantStatus.ACCEPTED
             };
@@ -223,14 +219,13 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
             return await Task.FromResult(Response<string>.Success(response.Data, ResponseStatus.Success));
         }
 
-
         public async Task<Response<string>> Delete(string ownerId,string communityId)
         {
             try
             {
                 Community community = await _communityRepository.GetFirstAsync(c => c.Id == communityId);
 
-                if (community.AdminId == ownerId)
+                if (community.Admin.Id == ownerId)
                 {
                     _communityRepository.DeleteById(communityId);
                     _participiantRepository.DeleteByExpression(p => p.CommunityId == communityId);
@@ -247,32 +242,31 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
             }
         }
 
-
         public async Task<Response<NoContent>> KickUser(string token, string communityId, string userId)
         {
             try
             {
                 string currentId = TokenHelper.GetUserIdByToken(token);
 
-                Community? community = await _communityRepository.GetFirstAsync(c => c.Id == communityId && c.AdminId == currentId);
+                Community? community = await _communityRepository.GetFirstAsync(c => c.Id == communityId && c.Admin.Id == currentId);
 
                 if (community == null)
                     return Response<NoContent>.Fail("Community Not Found",ResponseStatus.NotFound);
 
                 // Only admin can kick participiants.
-                if(currentId != community.AdminId)
+                if(currentId != community.Admin.Id)
                     return Response<NoContent>.Fail("Unaturhoized for this feature.",ResponseStatus.Unauthorized);
 
                 // Admin can't kick himself
                 if(currentId == userId)
                     return Response<NoContent>.Fail("Admin can not kick yourself",ResponseStatus.BadRequest);
 
-                CommunityParticipiant? participiant = await _participiantRepository.GetFirstAsync(p => p.CommunityId == communityId && p.UserId == userId);
+                CommunityParticipiant? participiant = await _participiantRepository.GetFirstAsync(p => p.CommunityId == communityId && p.User.Id == userId);
 
                 if(participiant == null)
                     return Response<NoContent>.Fail("User Not Found",ResponseStatus.NotFound);
 
-                _participiantRepository.DeleteByExpression(p => p.CommunityId == communityId && p.UserId == userId);
+                _participiantRepository.DeleteByExpression(p => p.CommunityId == communityId && p.User.Id == userId);
 
                 return Response<NoContent>.Success(ResponseStatus.Success);
             }
@@ -283,7 +277,6 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
             }
         }
 
-
         public async Task<Response<string>> AssignUserAsAdmin(string userId, AssignUserAsAdminDto dtoInfo)
         {
             try
@@ -292,15 +285,17 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
                 {
                     return await Task.FromResult(Response<string>.Fail("Bad Request", ResponseStatus.BadRequest));
                 }
-
                 Community community = await _communityRepository.GetFirstAsync(c => c.Id == dtoInfo.CommunityId);
-
                 //   Admin yapılacak kişi participiant mı ?            Isteği atan kişi admin mi ?
-                var isParticipiantTargetUser = await _participiantRepository.AnyAsync(p => p.CommunityId == community.Id && p.UserId == dtoInfo.UserId );
-                if (!isParticipiantTargetUser || userId != community.AdminId)
+                var isParticipiantTargetUser = await _participiantRepository.AnyAsync(p => p.CommunityId == community.Id && p.User.Id == dtoInfo.UserId );
+                if (!isParticipiantTargetUser || userId != community.Admin.Id)
                     return await Task.FromResult(Response<string>.Fail("Failed", ResponseStatus.NotAuthenticated));
+              
+                User? user = await HttpRequestHelper.GetUser(Token);
+                if(user == null) throw new NotFoundException("User not found");
 
-                community.AdminId = dtoInfo.UserId;
+                community.Admin = user;
+
                 _communityRepository.Update(community);
                 return await Task.FromResult(Response<string>.Success("Successfully updated new admin.", ResponseStatus.Success));
 
@@ -316,26 +311,26 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
             Community community = await _communityRepository.GetFirstAsync(c => c.Id == dtoInfo.CommunityId);
 
             // Is it a moderator or admin who will assign the user as a moderator?
-            if (community.ModeratorIds.FirstOrDefault(m => m.UserId == dtoInfo.UserId) == null && community.AdminId == dtoInfo.AssignedById || community.ModeratorIds.FirstOrDefault(m => m.UserId == dtoInfo.AssignedById) != null )
+            if (community.ModeratorIds.FirstOrDefault(m => m.User.Id == dtoInfo.UserId) == null && community.Admin.Id == dtoInfo.AssignedById || community.ModeratorIds.FirstOrDefault(m => m.User.Id == dtoInfo.AssignedById) != null )
             {
-                community.ModeratorIds.Add(new() { UserId = dtoInfo.UserId, AssignedById = dtoInfo.AssignedById });
+                User? user = await HttpRequestHelper.GetUser(Token);
+                if (user == null) throw new NotFoundException("User not found");
+                community.ModeratorIds.Add(new() { User = user, AssignedById = dtoInfo.AssignedById });
                 var response = _communityRepository.Update(community);
                 return await Task.FromResult(Response<string>.Success("Success", ResponseStatus.Success));
             }
             else
             {
                 return await Task.FromResult(Response<string>.Fail("Failed", ResponseStatus.InitialError));
-
             }
         }
-
 
         public async Task<Response<string>> DeletePermanently(string ownerId, string communityId)
         {
 
             Community community = await _communityRepository.GetFirstAsync(c => c.Id == communityId);
 
-            if (community.AdminId == ownerId)
+            if (community.Admin.Id == ownerId)
             {
                 _communityRepository.DeleteCompletely(communityId);
                 return Response<string>.Success("Deleted", ResponseStatus.Success);
@@ -343,10 +338,8 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
             else
             {
                 return Response<string>.Fail("Not authorized for delete community. You are not an admin!", ResponseStatus.NotAuthenticated);
-
             }
         }
-
 
         public async Task<Response<string>> GetCommunityTitle(string id)
         {
@@ -356,7 +349,7 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
 
         public async Task<Response<List<CommunityGetPreviewDto>>> GetUserCommunities(string userId, int skip = 0, int take = 10)
         {
-            var participiants =  _participiantRepository.GetListByExpressionPaginated(skip, take, c => c.UserId == userId && c.IsShownOnProfile && c.Status == ParticipiantStatus.ACCEPTED);
+            var participiants =  _participiantRepository.GetListByExpressionPaginated(skip, take, c => c.User.Id == userId && c.IsShownOnProfile && c.Status == ParticipiantStatus.ACCEPTED);
             List<string> idList = participiants.Select(p => p.CommunityId).ToList();
             var communities = await _communityRepository.GetListByExpressionAsync(c => idList.Contains(c.Id));
             List<CommunityGetPreviewDto> dtos = _mapper.Map<List<CommunityGetPreviewDto>>(communities);
@@ -410,7 +403,7 @@ namespace Topluluk.Services.CommunityAPI.Services.Implementation
         {
             try
             {
-                bool result = await _communityRepository.AnyAsync(c => !c.IsDeleted && c.AdminId == userId);
+                bool result = await _communityRepository.AnyAsync(c => !c.IsDeleted && c.Admin.Id == userId);
                 return await Task.FromResult(Response<bool>.Success(result, ResponseStatus.Success));
             }
             catch (Exception e)

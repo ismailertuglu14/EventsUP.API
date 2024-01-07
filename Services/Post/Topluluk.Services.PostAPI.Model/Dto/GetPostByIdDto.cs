@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using System;
 using Topluluk.Services.PostAPI.Model.Entity;
 using Topluluk.Shared.Dtos;
 using Topluluk.Shared.Enums;
@@ -7,6 +8,7 @@ namespace Topluluk.Services.PostAPI.Model.Dto
 {
 	public class GetPostByIdDto
 	{
+		[BsonRepresentation(MongoDB.Bson.BsonType.ObjectId)]
 		public string Id { get; set; }
 
         public User User { get; set; }

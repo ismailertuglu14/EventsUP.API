@@ -10,6 +10,7 @@ using Topluluk.Services.User.Services.Core;
 using Topluluk.Shared.Dtos;
 using Topluluk.Shared.Middleware;
 using Newtonsoft.Json;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,8 +33,21 @@ var mapperConfig = new MapperConfiguration(cfg =>
 });
 builder.Services.AddSingleton(mapperConfig.CreateMapper());
 IConfiguration configuration = builder.Configuration;
-var multiplexer = ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis"));
-builder.Services.AddSingleton<IConnectionMultiplexer>(multiplexer);
+
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(new Uri(configuration.GetSection("RabbitMQ:Host").Value), host =>
+        {
+            host.Username(configuration.GetSection("RabbitMQ:Username").Value);
+            host.Password(configuration.GetSection("RabbitMQ:Password").Value);
+        });
+
+    });
+});
+
+builder.Services.AddMassTransitHostedService();
 builder.Services.AddInfrastructure();
 builder.Services.AddAuthentication(options =>
 {
@@ -60,18 +74,36 @@ builder.Services.AddAuthentication(options =>
             context.HandleResponse();
             context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
             context.Response.ContentType = "application/json";
-            var errorResponse = new Response<string>
+            var errorResponse = new Topluluk.Shared.Dtos.Response<string>
             {
                 Data = null!,
                 StatusCode = Topluluk.Shared.Enums.ResponseStatus.Unauthorized,
                 IsSuccess = false,
-                Errors = new List<string> {"Unauthorized access denied."}
+                Errors = new List<string> { "Unauthorized access denied." }
             };
             var json = JsonConvert.SerializeObject(errorResponse);
             await context.Response.WriteAsync(json);
-        }
+        },
+        OnAuthenticationFailed = async context =>
+        {
+            context.Fail("Unauthorized access denied1.");
+            context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+            context.Response.ContentType = "application/json";
+            var errorResponse = new Topluluk.Shared.Dtos.Response<string>
+            {
+                Data = null!,
+                StatusCode = Topluluk.Shared.Enums.ResponseStatus.Unauthorized,
+                IsSuccess = false,
+                Errors = new List<string> { "Unauthorized access denied2."}
+            };
+            var json = JsonConvert.SerializeObject(errorResponse);
+            await context.Response.WriteAsync(json);
+        },
+        
+        
     };
 });
+builder.Services.AddHttpContextAccessor();
 var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

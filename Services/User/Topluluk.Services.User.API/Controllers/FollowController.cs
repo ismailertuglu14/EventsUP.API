@@ -57,15 +57,15 @@ public class FollowController : BaseController
     {
         return await _followService.GetFollowerRequests(this.UserId, id,skip,take);
     }
-    [HttpGet("followings")]
-    public async Task<Response<List<FollowingUserDto>>> GetFollowingUsers(string id, int take, int skip)
+    [HttpGet("{id}/followings")]
+    public async Task<Response<List<FollowingUserDto>>> GetFollowingUsers(string id, string? query, int take, int skip)
     {
-        return await _followService.GetFollowingUsers(this.UserId, id, skip, take);
+        return await _followService.GetFollowingUsers(id, query, skip, take);
     }
-    [HttpGet("followers")]
-    public async Task<Response<List<FollowerUserDto>>> GetFollowerUsers(string id, int take, int skip)
+    [HttpGet("{id}/followers")]
+    public async Task<Response<List<FollowerUserDto>>> GetFollowerUsers(string id, string? query, int take, int skip)
     {
-        return await _followService.GetFollowerUsers(this.UserId, id, skip, take);
+        return await _followService.GetFollowerUsers(id, query, skip, take);
     }
     [HttpGet("follow-suggestions")]
     public async Task<Response<List<UserSuggestionsDto>>> FollowSuggestions()

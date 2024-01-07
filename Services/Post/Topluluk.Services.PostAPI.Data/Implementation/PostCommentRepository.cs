@@ -5,6 +5,7 @@ using MongoDB.Driver;
 using Topluluk.Services.PostAPI.Data.Interface;
 using Topluluk.Services.PostAPI.Model.Dto;
 using Topluluk.Services.PostAPI.Model.Entity;
+using Topluluk.Shared.Dtos;
 
 namespace Topluluk.Services.PostAPI.Data.Implementation
 {
@@ -12,10 +13,12 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
 	{
         private readonly IConnectionFactory _connectionFactory;
         private readonly ICommentInteractionRepository _commentInteractionRepository;
-        public PostCommentRepository(IConnectionFactory connection, ICommentInteractionRepository commentInteractionRepository) : base(connection)
-		{
+        private readonly IMongoClient _mongoClient;
+        public PostCommentRepository(IConnectionFactory connection, ICommentInteractionRepository commentInteractionRepository, IMongoClient mongoClient) : base(connection)
+        {
             _connectionFactory = connection;
             _commentInteractionRepository = commentInteractionRepository;
+            _mongoClient = mongoClient;
         }
         private IMongoDatabase GetConnection() => (MongoDB.Driver.IMongoDatabase)_connectionFactory.GetConnection;
         private string GetCollectionName() => $"{nameof(PostComment)}Collection";
@@ -169,6 +172,37 @@ namespace Topluluk.Services.PostAPI.Data.Implementation
             {
                 throw new Exception(e.Message);
             }
+        }
+
+        public async Task<bool> UserUpdated(User newUser)
+        {
+            var database = GetConnection();
+            var collectionName = GetCollectionName();
+            using (var session = await _mongoClient.StartSessionAsync())
+            {
+                session.StartTransaction();
+                try
+                {
+                    long documentCount = await database.GetCollection<PostComment>(collectionName).CountDocumentsAsync(session, p => p.User.Id == newUser.Id);
+                    var response = await database.GetCollection<PostComment>(collectionName).UpdateManyAsync(session, p => p.User.Id == newUser.Id, Builders<PostComment>.Update.Set(p => p.User, newUser));
+
+                    if (response.ModifiedCount == documentCount)
+                    {
+                        await session.CommitTransactionAsync();
+                        return true;
+                    }
+                    else
+                    {
+                        throw new Exception($"Modified counts doesnt match, documentCount: {documentCount}, modifiedCount: {response.ModifiedCount}");
+                    }
+                }
+                catch (Exception e)
+                {
+                    await session.AbortTransactionAsync();
+                    return false;
+                }
+            }
+
         }
     }
 }

@@ -10,6 +10,7 @@ using Topluluk.Services.AuthenticationAPI.Services.Helpers;
 using Topluluk.Services.AuthenticationAPI.Services.Interface;
 using Topluluk.Shared.Constants;
 using Topluluk.Shared.Dtos;
+using Topluluk.Shared.Exceptions;
 using Topluluk.Shared.Helper;
 using Topluluk.Shared.Messages.Authentication;
 using _MassTransit = MassTransit;
@@ -37,20 +38,16 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
 
         public async Task<Response<TokenDto>> SignIn(SignInUserDto userDto, string? ipAdress, string? deviceId)
         {
-            TokenHelper _tokenHelper = new TokenHelper(_configuration);
-            UserCredential? user = new();
-            if (!userDto.UserName.IsNullOrEmpty())
+            try
             {
-                user = await _repository.GetFirstAsync(u => u.UserName == userDto.UserName && u.Provider == userDto.Provider);
-            }
-            else if (!userDto.Email.IsNullOrEmpty())
-            {
-                user = await _repository.GetFirstAsync(u => u.Email == userDto.Email && u.Provider == userDto.Provider);
-            }
-            if(user != null)
-            {
+                TokenHelper _tokenHelper = new TokenHelper(_configuration);
+                UserCredential? user = await _repository.GetFirstAsync(u => 
+                    (userDto.UserName.IsNullOrEmpty() || u.UserName == userDto.UserName) &&
+                    (userDto.Email.IsNullOrEmpty() || u.Email == userDto.Email) &&
+                    u.Provider == Shared.Enums.LoginProvider.Internal);
+
                 var isPasswordVerified = PasswordFunctions.VerifyPassword(userDto.Password, user.HashedPassword);
-                if(isPasswordVerified)
+                if (isPasswordVerified)
                 {
                     // Dead code fix later.b
                     if (DateTime.Now < user.LockoutEnd)
@@ -61,7 +58,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
                     user.AccessFailedCount = 0;
                     user.LockoutEnd = DateTime.MinValue;
                     user.Locked = false;
-                    UpdateRefreshToken(user,token,2);
+                    UpdateRefreshToken(user, token, 2);
                     LoginLog loginLog = new()
                     {
                         UserId = user.Id,
@@ -73,7 +70,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
                     return Response<TokenDto>.Success(token, ResponseStatus.Success);
                 }
                 // User found but password wrong.
-                if(user.AccessFailedCount < 15)
+                if (user.AccessFailedCount < 15)
                 {
                     user.AccessFailedCount += 1;
                 }
@@ -84,8 +81,12 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
                     // todo We have to send a mail to user about someone wants to login without permission him/her account.
                 }
                 _repository.Update(user);
+
+                return Response<TokenDto>.Fail("Username or password wrong!", ResponseStatus.NotAuthenticated);
+            }catch(NullReferenceException exception)
+            {
+                throw new UserNotFoundException();
             }
-            return Response<TokenDto>.Fail("Username or password wrong!", ResponseStatus.NotAuthenticated);
         }
 
         public async Task<Response<TokenDto?>> SignUp(CreateUserDto userDto)
@@ -124,7 +125,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             var user = _repository.GetFirst(u => u.UserName == userDto.UserName);
             UpdateRefreshToken(user, token, 2);
             SendRegisteredMail sendRegisteredMail = new(_endpointProvider);
-            //sendRegisteredMail.send(userDto.FirstName, userDto.LastName, userDto.Email);
+            sendRegisteredMail.send(userDto.FullName, userDto.Email);
             return Response<TokenDto?>.Success(token, ResponseStatus.Success);
         }
 

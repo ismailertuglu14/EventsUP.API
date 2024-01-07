@@ -27,7 +27,7 @@ public class CommunityImageService : ICommunityImageService
 
       public async Task<Response<string>> UpdateCoverImage(string userId, string communityId, IFormFile file)
         {
-            Community? community = await _communityRepository.GetFirstAsync(c => c.Id == communityId && c.AdminId == userId);
+            Community? community = await _communityRepository.GetFirstAsync(c => c.Id == communityId && c.Admin.Id == userId);
 
             if (community == null)
             {
@@ -94,7 +94,7 @@ public class CommunityImageService : ICommunityImageService
             if (community == null)
                 throw new NotFoundException("Community Not Found");
 
-            if (community.AdminId != userId)
+            if (community.Admin.Id != userId)
                 throw new UnauthorizedAccessException();
 
             using (var client = new HttpClient())
@@ -118,7 +118,6 @@ public class CommunityImageService : ICommunityImageService
 
                 if (!community.CoverImage.IsNullOrEmpty())
                 {
-
                     NameObject nameObject = new() { Name = community.CoverImage! };
                     var deleteBannerImageRequest = new RestRequest(ServiceConstants.API_GATEWAY + "/file/delete-community-banner-image").AddBody(nameObject);
                     var deleteCoverImageResponse = await _client.ExecutePostAsync<Response<string>>(deleteBannerImageRequest);
@@ -130,7 +129,6 @@ public class CommunityImageService : ICommunityImageService
                     if (responseData != null)
                     {
                         var imageUrl = responseData.Data;
-
                         community.BannerImage = imageUrl;
                         _communityRepository.Update(community);
                         return Response<string>.Success(imageUrl, ResponseStatus.Success);
@@ -155,7 +153,7 @@ public class CommunityImageService : ICommunityImageService
         if (community == null)
             throw new NotFoundException("Community Not Found");
 
-        if (community.AdminId != userId)
+        if (community.Admin.Id != userId)
             throw new UnauthorizedAccessException();
 
         community.CoverImage = null;
@@ -171,7 +169,7 @@ public class CommunityImageService : ICommunityImageService
         if (community == null)
             throw new NotFoundException("Community Not Found");
 
-        if (community.AdminId != userId)
+        if (community.Admin.Id != userId)
             throw new UnauthorizedAccessException();
 
         community.BannerImage = null;

@@ -32,7 +32,7 @@ namespace Topluluk.Services.EventAPI.Services.Core
         {
             services.AddTransient<IEventService, EventService>();
             services.AddScoped<IEventCommentService, EventCommentService>();
-
+            services.AddHttpContextAccessor();
         }
     }
 }

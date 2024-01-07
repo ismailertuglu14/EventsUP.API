@@ -14,13 +14,13 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Helpers
             _endpointProvider = endpointProvider;
         }
 
-        public async Task send(string firstName, string lastName, string email)
+        public async Task send(string fullname, string email)
         {
             var sendEndpoint = await _endpointProvider.GetSendEndpoint(new Uri(QueueConstants.SUCCESSFULLY_REGISTERED_MAIL));
             var registerMessage = new SuccessfullyRegisteredCommand
             {
                 To = email,
-                FullName = $"{firstName} {lastName}"
+                FullName = $"{fullname}"
             };
             sendEndpoint.Send<SuccessfullyRegisteredCommand>(registerMessage);
 

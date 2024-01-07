@@ -1,8 +1,10 @@
 ﻿using System.Text;
 using AutoMapper;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Topluluk.Services.PostAPI.Model.Mapper;
+using Topluluk.Services.PostAPI.Services.Consumer;
 using Topluluk.Services.PostAPI.Services.Core;
 using Topluluk.Shared.Middleware;
 
@@ -21,7 +23,26 @@ builder.Services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
            .AllowAnyMethod()
            .AllowAnyHeader();
 }));
+var configuration = builder.Configuration;
 
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<UserUpdatedConsumer>();
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(new Uri(configuration.GetSection("RabbitMQ:Host").Value), host =>
+        {
+            host.Username(configuration.GetSection("RabbitMQ:Username").Value);
+            host.Password(configuration.GetSection("RabbitMQ:Password").Value);
+        });
+        cfg.ReceiveEndpoint("user-updated", e =>
+        {
+            e.ConfigureConsumer<UserUpdatedConsumer>(context);
+        });
+    });
+    
+});
+builder.Services.AddMassTransitHostedService();
 
 var mapperConfig = new MapperConfiguration(cfg =>
 {

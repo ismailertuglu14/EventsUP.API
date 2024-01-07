@@ -21,13 +21,18 @@ namespace Topluluk.Services.User.API.Controllers
        // [Authorize]
         public async Task<Response<GetUserByIdDto>> GetUserById(string userId)
         {
-            return await _userService.GetUserById(this.UserId, userId);
+            return await _userService.GetUserById(userId);
         }
 
         [HttpGet("{userName}")]
         public async Task<Response<GetUserByIdDto>> GetUserByUserName([FromRoute] string userName)
         {
             return await _userService.GetUserByUserName(this.UserId, userName);
+        }
+        [HttpGet("GetUserAfterLogin")]
+        public async Task<Response<GetUserAfterLoginDto>> GetUserAfterLogin()
+        {
+            return await _userService.GetUserAfterLogin(this.UserId);
         }
 
         [HttpGet("suggestions")]
@@ -70,6 +75,22 @@ namespace Topluluk.Services.User.API.Controllers
             return await _userService.UpdateProfile(this.UserId, this.Token, dto);
         }
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ For Http Calls coming from other services @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+        [HttpGet("ready")]
+        public async Task<IActionResult> Ready()
+        {
+            return Ok(false);
+        }
+        [HttpGet("commit")]
+        public async Task<IActionResult> Commit()
+        {
+            return Ok(true);
+        }
+        [HttpGet("discard")]
+        public async Task<IActionResult> Discard()
+        {
+            return Ok("Discarded");
+        }
 
         [HttpPost("[action]")]
         public async Task<Response<string>> InsertUser([FromBody] UserInsertDto userInfo)

@@ -8,7 +8,8 @@ namespace Topluluk.Services.EventAPI.Model.Dto
 		// 
 		public string? CommunityId { get; set; }
 		public string Title { get; set; }
-		public string Description { get; set; }
+        public IFormFile CoverImage { get; set; }
+        public string Description { get; set; }
 		public bool? IsLimited { get; set; } = false;
 		public int? ParticipiantLimit { get; set; } = 0;
 		public IFormFileCollection? Files { get; set; }

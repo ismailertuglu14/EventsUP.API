@@ -1,10 +1,8 @@
-using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-using Topluluk.Shared.BaseModels;
 
 namespace Topluluk.Api.Gateways.Controllers;
 
-public class GatewayController : BaseController
+public class GatewayController : ControllerBase
 {
     // GET
     [HttpGet("[action]")]

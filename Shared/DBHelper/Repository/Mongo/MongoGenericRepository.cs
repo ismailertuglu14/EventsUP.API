@@ -12,7 +12,6 @@ namespace DBHelper.Repository.Mongo
         private readonly IConnectionFactory _connectionFactory;
         private readonly IMongoCollection<T> _collection;
 
-
         public MongoGenericRepository(IConnectionFactory connectionFactory)
         {
             _connectionFactory = connectionFactory;
@@ -34,7 +33,7 @@ namespace DBHelper.Repository.Mongo
         //todo: Need performence improvements
         public DatabaseResponse BulkUpdate(List<T> entityList)
         {
-
+            //var result = _collection.BulkWrite(entityList.Select(entity => new ReplaceOneModel<T>(Builders<T>.Filter.Eq(x => x.Id, entity.Id), entity)));
             foreach (T entity in entityList)
             {
                 var data = _collection.ReplaceOne(x => x.Id == entity.Id, entity);
@@ -42,7 +41,6 @@ namespace DBHelper.Repository.Mongo
             var dbResponse = new DatabaseResponse();
             dbResponse.IsSuccess = true;
             dbResponse.Data = "Datas updated successfully";
-
             return dbResponse;
         }
 
@@ -212,13 +210,10 @@ namespace DBHelper.Repository.Mongo
         public DatabaseResponse GetById(string id)
         {
             var defaultFilter = Builders<T>.Filter.Eq(x => x.IsDeleted, false);
-
             var data = _collection.Find(x => x.Id == id).FirstOrDefault();
-
             DatabaseResponse response = new();
             response.Data = data;
             response.IsSuccess = true;
-
             return response;
         }
 
@@ -393,6 +388,12 @@ namespace DBHelper.Repository.Mongo
             return (int)response;
         }
 
+        public async Task<bool> BulkUpdateAsync(Expression<Func<T, bool>> filter, UpdateDefinition<T> update)
+        {
+            var response = await _collection.UpdateManyAsync(filter, update);
+            
+            return response.ModifiedCount > 0;
+        }
     }
 }
 

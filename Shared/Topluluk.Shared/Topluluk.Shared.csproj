@@ -22,9 +22,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Helper\" />
-    <Folder Include="BaseModels\" />
     <Folder Include="Messages\Authentication\" />
-    <Folder Include="Messages\User\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />

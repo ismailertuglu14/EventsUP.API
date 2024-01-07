@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+using DBHelper.Connection.Redis;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using StackExchange.Redis;
@@ -6,18 +6,18 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace DBHelper.Repository.Redis;
 
-public class RedisCacheRepository : IRedisRepository
+public class RedisCacheRepository : IRedisRepository, IDisposable
 {
-    private readonly IConnectionMultiplexer _redisCon;
+    private readonly IRedisDatabaseSettings _redisCon;
     private readonly IDatabase _cache;
     private TimeSpan ExpireTime => TimeSpan.FromMinutes(5);
-    public RedisCacheRepository(IConnectionMultiplexer redisCon)
+    public RedisCacheRepository(IRedisDatabaseSettings redisCon)
     {
         _redisCon = redisCon;
-        _cache = redisCon.GetDatabase();
+        _cache = redisCon.Connection.GetDatabase();
 
     }
-    public bool IsConnected => _redisCon.IsConnected;
+    public bool IsConnected => _redisCon.Connection.IsConnected;
 
     public async Task<T> GetOrNullAsync<T>(string key) where T : class
     {
@@ -33,13 +33,12 @@ public class RedisCacheRepository : IRedisRepository
     {
         await _cache.KeyDeleteAsync(key);
     }
-
     public void ClearAll()
     {
-        var endpoints = _redisCon.GetEndPoints(true);
+        var endpoints = _redisCon.Connection.GetEndPoints(true);
         foreach (var endpoint in endpoints)
         {
-            var server = _redisCon.GetServer(endpoint);
+            var server = _redisCon.Connection.GetServer(endpoint);
             server.FlushAllDatabases();
         }
     }
@@ -78,13 +77,6 @@ public class RedisCacheRepository : IRedisRepository
         return result;
     }
 
-    /// <summary>
-    /// Auto Serialize T model
-    /// </summary>
-    /// <param name="key"></param>
-    /// <param name="value"></param>
-    /// <typeparam name="T"></typeparam>
-    /// <returns></returns>
     public async Task<bool> SetValueAsync<T>(string key, T value)
     {
         var json = JsonConvert.SerializeObject(value);
@@ -101,5 +93,9 @@ public class RedisCacheRepository : IRedisRepository
         }
         return JsonSerializer.Deserialize<T>(result);
     }
-
+    public void Dispose()
+    {
+        _redisCon.Connection.Close();
+        _redisCon.Connection.Dispose();
+    }
 }
