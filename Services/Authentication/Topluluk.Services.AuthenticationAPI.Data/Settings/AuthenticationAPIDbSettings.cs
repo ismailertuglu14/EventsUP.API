@@ -1,6 +1,7 @@
 ﻿using System;
 using DBHelper.Connection;
 using Microsoft.Extensions.Configuration;
+using Topluluk.Shared.Constants;
 
 namespace Topluluk.Services.AuthenticationAPI.Data.Settings
 {
@@ -11,7 +12,7 @@ namespace Topluluk.Services.AuthenticationAPI.Data.Settings
         {
             _configuration = configuration;
         }
-        public string ConnectionString { get { return _configuration.GetConnectionString("MongoDB");; } }
+        public string ConnectionString { get { return _configuration.GetConnectionString("MongoDB") ?? throw new ArgumentNullException(ExceptionMessages.ConnectionStringNullMessage); } }
         public string DatabaseName { get { return "User"; } }
     }
 }

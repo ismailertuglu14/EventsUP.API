@@ -27,7 +27,9 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
         private readonly RestClient _client;
         private readonly _MassTransit.ISendEndpointProvider _endpointProvider;
         private readonly ILogger<AuthenticationService> _logger;
-        public AuthenticationService(ILogger<AuthenticationService> logger,IAuthenticationRepository repository, _MassTransit.ISendEndpointProvider endpointProvider, IConfiguration configuration, ILoginLogRepository loginLogRepository)
+        private readonly TokenHelper _tokenHelper;
+        public AuthenticationService(ILogger<AuthenticationService> logger,IAuthenticationRepository repository, _MassTransit.ISendEndpointProvider endpointProvider, IConfiguration configuration, ILoginLogRepository loginLogRepository,
+            TokenHelper tokenHelper)
 		{
             _repository = repository;
             _configuration = configuration;
@@ -35,17 +37,18 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             _endpointProvider = endpointProvider;
             _client = new RestClient();
             _logger = logger;
+            _tokenHelper = tokenHelper;
 		}
 
         public async Task<Response<TokenDto>> SignIn(SignInUserDto userDto, string? ipAdress, string? deviceId)
         {
             try
             {
-                TokenHelper _tokenHelper = new TokenHelper(_configuration);
                 UserCredential? user = await _repository.GetFirstAsync(u => 
                     (userDto.UserName.IsNullOrEmpty() || u.UserName == userDto.UserName) &&
                     (userDto.Email.IsNullOrEmpty() || u.Email == userDto.Email) &&
-                    u.Provider == Shared.Enums.LoginProvider.Internal);
+                    u.Provider == Shared.Enums.LoginProvider.Internal
+                );
                 if (user == null) throw new UserNotFoundException();
                 var isPasswordVerified = PasswordFunctions.VerifyPassword(userDto.Password, user.HashedPassword);
                 if (isPasswordVerified)
@@ -66,8 +69,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
                         IpAdress = ipAdress ?? "",
                         DeviceId = deviceId ?? ""
                     };
-                    await _loginLogRepository.InsertAsync(loginLog);
-
+                    _loginLogRepository.Insert(loginLog);
                     return Response<TokenDto>.Success(token, ResponseStatus.Success);
                 }
                 // User found but password wrong.

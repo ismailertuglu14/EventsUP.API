@@ -22,18 +22,21 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
         private readonly IConfiguration _configuration;
         private readonly RestClient _client;
         private readonly _MassTransit.ISendEndpointProvider _endpointProvider;
-
+        private readonly TokenHelper _tokenHelper;
         public ExternalAuthenticationService(
             IAuthenticationRepository repository,
             ILoginLogRepository loginLogRepository,
             _MassTransit.ISendEndpointProvider endpointProvider,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            TokenHelper tokenHelper
+            )
         {
             _repository = repository;
             _loginLogRepository = loginLogRepository;
             _configuration = configuration;
             _client = new RestClient();
             _endpointProvider = endpointProvider;
+            _tokenHelper = tokenHelper;
         }
 
         public async Task<Response<TokenDto>> SignInWithGoogle(GoogleLoginDto dto)
@@ -44,11 +47,10 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             };
             GoogleJsonWebSignature.Payload? payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken, settings);
             UserCredential? userCredentials = await _repository.GetFirstAsync(x => x.Email == payload.Email && x.Provider == Shared.Enums.LoginProvider.Google);    
-            TokenHelper tokenHelper = new TokenHelper(_configuration);
             TokenDto token = new();
             if (userCredentials != null)
             {
-                token = tokenHelper.CreateAccessToken(userCredentials.Id, userCredentials.UserName, userCredentials.Role);
+                token = _tokenHelper.CreateAccessToken(userCredentials.Id, userCredentials.UserName, userCredentials.Role);
                 return Response<TokenDto>.Success(token, ResponseStatus.Success);
             }
             string newUserName = payload.Name.Replace(" ", "");
@@ -81,19 +83,15 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             if (!response.IsSuccessful || response.Data == null)
                 throw new Exception("Kullanıcı insert edilirken beklenmeyen bir hata oluştu.");
             await _repository.InsertAsync(credential);
-            token = tokenHelper.CreateAccessToken(credential.Id, newUserName, credential.Role);
+            token = _tokenHelper.CreateAccessToken(credential.Id, newUserName, credential.Role);
             SendRegisteredMail sendRegisteredMail = new(_endpointProvider);
             await sendRegisteredMail.send(payload.GivenName + " " + payload.FamilyName, payload.Email);
             return Response<TokenDto>.Success(token ,ResponseStatus.Success);
         }
-
         public Task<Response<NoContent>> SignInWithApple()
         {
             throw new NotImplementedException();
         }
-
-
-
     }
 }
 

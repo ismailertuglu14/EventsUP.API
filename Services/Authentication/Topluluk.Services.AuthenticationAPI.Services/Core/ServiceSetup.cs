@@ -7,6 +7,7 @@ using Topluluk.Services.AuthenticationAPI.Data.Interface;
 using Topluluk.Services.AuthenticationAPI.Data.Settings;
 using Topluluk.Services.AuthenticationAPI.Services.Implementation;
 using Topluluk.Services.AuthenticationAPI.Services.Interface;
+using Topluluk.Shared.Helper;
 
 namespace Topluluk.Services.AuthenticationAPI.Services.Core
 {
@@ -16,8 +17,8 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Core
 		{
             AddServicesForRepository(services);
             AddServicesForServices(services);
+            AddServicesForHelpers(services);
         }
-
         private static void AddServicesForRepository(this IServiceCollection services)
         {
             services.AddSingleton<IDbConfiguration, AuthenticationAPIDbSettings>();
@@ -26,16 +27,14 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Core
             services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
             services.AddScoped<ILoginLogRepository, LoginLogRepository>();
         }
-
         private static void AddServicesForServices(this IServiceCollection services)
         {
             services.AddTransient<IAuthenticationService, AuthenticationService>();
             services.AddTransient<IExternalAuthenticationService, ExternalAuthenticationService>();
         }
-
-        private static void AddServicesForLog(this IServiceCollection services)
+        private static void AddServicesForHelpers(this IServiceCollection services)
         {
-        //    services.
+            services.AddSingleton<TokenHelper>();
         }
    
     }
