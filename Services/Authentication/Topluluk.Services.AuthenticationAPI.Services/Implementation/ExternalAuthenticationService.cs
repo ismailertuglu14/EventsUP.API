@@ -83,7 +83,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             await _repository.InsertAsync(credential);
             token = tokenHelper.CreateAccessToken(credential.Id, newUserName, credential.Role);
             SendRegisteredMail sendRegisteredMail = new(_endpointProvider);
-            sendRegisteredMail.send(payload.GivenName + " " + payload.FamilyName, payload.Email);
+            await sendRegisteredMail.send(payload.GivenName + " " + payload.FamilyName, payload.Email);
             return Response<TokenDto>.Success(token ,ResponseStatus.Success);
         }
 

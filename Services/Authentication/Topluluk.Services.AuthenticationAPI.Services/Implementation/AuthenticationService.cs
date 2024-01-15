@@ -10,6 +10,7 @@ using Topluluk.Services.AuthenticationAPI.Services.Helpers;
 using Topluluk.Services.AuthenticationAPI.Services.Interface;
 using Topluluk.Shared.Constants;
 using Topluluk.Shared.Dtos;
+using Topluluk.Shared.Enums;
 using Topluluk.Shared.Exceptions;
 using Topluluk.Shared.Helper;
 using Topluluk.Shared.Messages.Authentication;
@@ -45,7 +46,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
                     (userDto.UserName.IsNullOrEmpty() || u.UserName == userDto.UserName) &&
                     (userDto.Email.IsNullOrEmpty() || u.Email == userDto.Email) &&
                     u.Provider == Shared.Enums.LoginProvider.Internal);
-
+                if (user == null) throw new UserNotFoundException();
                 var isPasswordVerified = PasswordFunctions.VerifyPassword(userDto.Password, user.HashedPassword);
                 if (isPasswordVerified)
                 {
@@ -101,7 +102,7 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Implementation
             {
                 UserName = userDto.UserName,
                 Email = userDto.Email,
-                Provider = userDto.Provider,
+                Provider = LoginProvider.Internal,
                 HashedPassword = PasswordFunctions.HashPassword(userDto.Password),
             });
             var content = new UserInsertDto

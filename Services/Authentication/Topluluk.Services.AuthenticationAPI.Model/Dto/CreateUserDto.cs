@@ -11,7 +11,6 @@ namespace Topluluk.Services.AuthenticationAPI.Model.Dto
 		public string Email { get; set; }
 		public string Password { get; set; }
 		public GenderEnum? Gender { get; set; }
-		public LoginProvider Provider { get; set; }
 		public CreateUserDto()
 		{
 			Gender = GenderEnum.Unspecified;

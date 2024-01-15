@@ -23,7 +23,6 @@ namespace Topluluk.Services.AuthenticationAPI.Services.Helpers
                 FullName = $"{fullname}"
             };
             sendEndpoint.Send<SuccessfullyRegisteredCommand>(registerMessage);
-
         }
 	}
 }

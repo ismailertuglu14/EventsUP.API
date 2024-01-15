@@ -44,7 +44,9 @@ public class ErrorHandlingMiddleware
             Data = null!,
             StatusCode = statusCode,
             IsSuccess = false,
-            Errors = new List<string> { exception.Message, exception.ToString() }
+            Errors =  new List<string> {
+                Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production" ? "An error occured." :  exception.Message, exception.ToString()
+            }
         };
         var json = JsonConvert.SerializeObject(errorResponse);
         return context.Response.WriteAsync(json);
